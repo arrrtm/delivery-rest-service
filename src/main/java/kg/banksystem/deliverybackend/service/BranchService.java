@@ -1,23 +1,25 @@
 package kg.banksystem.deliverybackend.service;
 
-import kg.banksystem.deliverybackend.entity.Branch;
+import kg.banksystem.deliverybackend.dto.admin.request.BranchRequestDTO;
+import kg.banksystem.deliverybackend.entity.BranchEntity;
 
 import java.util.List;
 
 public interface BranchService {
 
-    Long findBranchIdByUserId(Long id);
+    Long findBranchIdByUserId(Long userId);
 
-    List<Branch> getAllBranches();
+    List<BranchEntity> getAllBranches(int page);
 
-    Branch findById(Long id);
+    BranchEntity getBranchById(Long branchId);
 
-    // in progress
-    Branch addBranch(Branch branch);
+    boolean addBranch(BranchRequestDTO branchRequestDTO);
 
-    // in progress
-    Branch editBranch(Branch branch);
+    boolean editBranch(BranchRequestDTO branchRequestDTO);
 
-    // in progress
-    void deleteBranch(Long id);
+    boolean deleteBranch(BranchRequestDTO branchRequestDTO);
+
+    int branchPageCalculation(int page);
+
+    List<String> getBranchNames();
 }

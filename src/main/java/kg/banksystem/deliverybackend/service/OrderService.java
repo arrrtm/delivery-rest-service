@@ -1,45 +1,48 @@
 package kg.banksystem.deliverybackend.service;
 
 import com.google.zxing.WriterException;
-import kg.banksystem.deliverybackend.entity.Branch;
-import kg.banksystem.deliverybackend.entity.Order;
+import kg.banksystem.deliverybackend.entity.BranchEntity;
+import kg.banksystem.deliverybackend.entity.OrderEntity;
 
 import java.io.IOException;
 import java.util.List;
 
 public interface OrderService {
 
-    Order findById(Long id);
+    OrderEntity findOrderById(Long orderId);
 
-    // in progress
-    Order addOrder(Order order, Branch branch);
+    // IN PROGRESS
+    boolean addOrder(OrderEntity orderEntity, BranchEntity branchEntity);
 
-    // in progress
-    Order editOrder(Order order, Branch branch);
+    // IN PROGRESS
+    boolean editOrder(OrderEntity orderEntity, BranchEntity branchEntity);
 
-    // in progress
-    void deleteOrder(Long id);
+    // IN PROGRESS
+    boolean deleteOrder(Long orderId);
 
-    List<Order> getAllActiveOrders();
+    List<OrderEntity> getAllActiveOrders(int page, Long orderNumber, String branchName);
 
-    List<Order> getOrdersForBranch(Long user_id, String status);
+    List<OrderEntity> getOrdersForBranch(Long userId, String status, int page);
 
-    List<Order> getAllNewOrdersByUserID(Long id);
+    List<OrderEntity> getAllNewOrdersByUserId(Long userId);
 
-    List<Order> getAllAcceptedOrdersByUserID(Long id);
+    List<OrderEntity> getAllAcceptedOrdersByUserId(Long userId);
 
-    boolean acceptOrder(Long id_user, Long id_order) throws IOException, WriterException;
+    boolean acceptOrder(Long userId, Long orderId) throws IOException, WriterException;
 
-    boolean completeOrder(Long id_user, Long id_order, String requestStatus, String comment);
+    boolean completeOrder(Long userId, Long orderId, String requestStatus, String comment);
 
-    boolean validQrCodeOrder(Long order_id, Long user_id);
+    boolean validQrCodeOrder(Long orderId, Long userId);
 
-    boolean identificationClient(byte[] data, String fileName, Long client_id) throws IOException;
+    boolean identificationClient(byte[] data, String fileName, Long clientId) throws IOException;
 
-    boolean setReadyFromDeliveryStatusForOrder(Long order_id);
+    boolean setReadyFromDeliveryStatusForOrder(Long orderId);
 
-    boolean setDestroyedStatusForOrder(Long order_id);
+    boolean setDestroyedStatusForOrder(Long orderId);
 
-    // in progress
-    boolean setSentToBranchStatusForOrder(Long order_id);
+    boolean setSentToBranchStatusForOrder(Long orderId);
+
+    int orderPageCalculation(Long userId, String status, int page);
+
+    int orderWithBranchPageCalculation(int page, String branchName);
 }

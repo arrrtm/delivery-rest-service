@@ -1,23 +1,21 @@
 package kg.banksystem.deliverybackend.service;
 
-import kg.banksystem.deliverybackend.entity.Client;
+import kg.banksystem.deliverybackend.dto.bank.request.ClientRequestDTO;
+import kg.banksystem.deliverybackend.entity.ClientEntity;
 
 import java.util.List;
 
 public interface ClientService {
 
-    // in progress
-    List<Client> getAllClients();
+    List<ClientEntity> getAllClients(int page);
 
-    // in progress
-    Client getClientById();
+    ClientEntity getClientById(Long clientId);
 
-    // in progress
-    Client addClient(Client client);
+    boolean addClient(ClientRequestDTO clientRequestDTO);
 
-    // in progress
-    Client editClient(Client client);
+    boolean editClient(ClientRequestDTO clientRequestDTO);
 
-    // in progress
-    void deleteClient(Long id);
+    boolean deleteClient(ClientRequestDTO clientRequestDTO);
+
+    int clientPageCalculation(int page);
 }

@@ -8,8 +8,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class BaseResponse {
+public class PaginationResponse {
     private String message;
     private Object data;
     private RestStatus status;
+    private int totalPages;
 }

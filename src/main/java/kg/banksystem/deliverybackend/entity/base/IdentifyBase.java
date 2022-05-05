@@ -1,4 +1,4 @@
-package kg.banksystem.deliverybackend.entity;
+package kg.banksystem.deliverybackend.entity.base;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -9,7 +9,7 @@ import java.io.Serializable;
 @Getter
 @Setter
 @MappedSuperclass
-public class BaseEntity implements Serializable {
+public class IdentifyBase implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

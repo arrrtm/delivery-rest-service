@@ -1,37 +1,39 @@
 package kg.banksystem.deliverybackend.service;
 
-import kg.banksystem.deliverybackend.entity.Branch;
-import kg.banksystem.deliverybackend.entity.Role;
-import kg.banksystem.deliverybackend.entity.User;
+import kg.banksystem.deliverybackend.entity.BranchEntity;
+import kg.banksystem.deliverybackend.entity.RoleEntity;
+import kg.banksystem.deliverybackend.entity.UserEntity;
 
 import java.util.List;
 
 public interface UserService {
 
-    List<User> getAllUsers();
+    List<UserEntity> getAllUsers(int page);
 
-    List<User> getAllUsers(String role);
+    List<UserEntity> getAllUsers(String role, int page);
 
-    User findByUsername(String username);
+    UserEntity findUserById(Long userId);
 
-    User findById(Long id);
+    Long completeDeliveryByUserId(Long userId);
 
-    Long completeDeliveryByUserId(Long id);
+    boolean blockUser(Long userId);
 
-    boolean blockUser(Long id);
+    boolean unblockUser(Long userId);
 
-    boolean unblockUser(Long id);
+    // IN PROGRESS
+    boolean registerUser(UserEntity userEntity, RoleEntity roleEntity, BranchEntity branchEntity);
 
-    // in progress
-    User registerUser(User user, Role role, Branch branch);
+    // IN PROGRESS
+    boolean updateUser(UserEntity userEntity, RoleEntity roleEntity, BranchEntity branchEntity);
 
-    // in progress
-    User editUser(User user, Role role, Branch branch);
-
-    // in progress
-    void deleteUser(Long id);
+    // IN PROGRESS
+    boolean removeUser(Long userId);
 
     String authCheck(String username);
 
     boolean authAttemptReset(String username);
+
+    int userPageCalculation(int page);
+
+    UserEntity findByUsername(String username);
 }

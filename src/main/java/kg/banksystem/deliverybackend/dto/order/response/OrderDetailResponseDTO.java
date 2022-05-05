@@ -1,11 +1,14 @@
 package kg.banksystem.deliverybackend.dto.order.response;
 
+import kg.banksystem.deliverybackend.dto.admin.response.BranchResponseDTO;
+import kg.banksystem.deliverybackend.dto.bank.response.CardResponseDTO;
+import kg.banksystem.deliverybackend.dto.bank.response.ClientResponseDTO;
 import kg.banksystem.deliverybackend.dto.user.response.UserResponseDTO;
-import kg.banksystem.deliverybackend.entity.Order;
-import kg.banksystem.deliverybackend.entity.User;
+import kg.banksystem.deliverybackend.entity.OrderEntity;
+import kg.banksystem.deliverybackend.entity.UserEntity;
 import lombok.Data;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -14,34 +17,32 @@ public class OrderDetailResponseDTO {
     private Long id;
     private String addressPickup;
     private String addressDelivery;
-    private CardResponseDTO card;
-    private ClientResponseDTO client;
     private String typeDelivery;
     private String status;
+    private CardResponseDTO card;
+    private ClientResponseDTO client;
     private BranchResponseDTO branch;
-    private Date created;
-    private Date updated;
+    private LocalDateTime createdDate;
+    private LocalDateTime updatedDate;
     private Set<UserResponseDTO> users;
 
-    public static OrderDetailResponseDTO ordersForDetail(Order order) {
+    public static OrderDetailResponseDTO ordersForDetail(OrderEntity orderEntity) {
         OrderDetailResponseDTO orderDetailResponseDTO = new OrderDetailResponseDTO();
-        orderDetailResponseDTO.setId(order.getId());
-        orderDetailResponseDTO.setAddressPickup(order.getAddressPickup());
-        orderDetailResponseDTO.setAddressDelivery(order.getAddressDelivery());
-        orderDetailResponseDTO.setCard(CardResponseDTO.cardData(order.getCard()));
-        orderDetailResponseDTO.setClient(ClientResponseDTO.clientData(order.getClient()));
-        orderDetailResponseDTO.setTypeDelivery(order.getTypeDelivery().getValue());
-        orderDetailResponseDTO.setStatus(order.getStatus().getValue());
-        orderDetailResponseDTO.setBranch(BranchResponseDTO.branchData(order.getBranch()));
-        orderDetailResponseDTO.setCreated(order.getCreated());
-        orderDetailResponseDTO.setUpdated(order.getUpdated());
-
+        orderDetailResponseDTO.setId(orderEntity.getId());
+        orderDetailResponseDTO.setAddressPickup(orderEntity.getAddressPickup());
+        orderDetailResponseDTO.setAddressDelivery(orderEntity.getAddressDelivery());
+        orderDetailResponseDTO.setTypeDelivery(orderEntity.getTypeDelivery().getValue());
+        orderDetailResponseDTO.setStatus(orderEntity.getStatus().getValue());
+        orderDetailResponseDTO.setCard(CardResponseDTO.cardData(orderEntity.getCardEntity()));
+        orderDetailResponseDTO.setClient(ClientResponseDTO.clientData(orderEntity.getClientEntity()));
+        orderDetailResponseDTO.setBranch(BranchResponseDTO.branchData(orderEntity.getBranchEntity()));
+        orderDetailResponseDTO.setCreatedDate(orderEntity.getCreatedDate());
+        orderDetailResponseDTO.setUpdatedDate(orderEntity.getUpdatedDate());
         Set<UserResponseDTO> userResponseDTOS = new HashSet<>();
-        for (User user : order.getUsers()) {
-            userResponseDTOS.add(UserResponseDTO.userPersonalAccount(user));
+        for (UserEntity userEntity : orderEntity.getUserEntities()) {
+            userResponseDTOS.add(UserResponseDTO.userPersonalAccount(userEntity));
         }
         orderDetailResponseDTO.setUsers(userResponseDTOS);
-
         return orderDetailResponseDTO;
     }
 }

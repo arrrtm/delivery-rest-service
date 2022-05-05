@@ -2,9 +2,10 @@ package kg.banksystem.deliverybackend.rest;
 
 import kg.banksystem.deliverybackend.dto.order.request.OrderIdRequestDTO;
 import kg.banksystem.deliverybackend.dto.order.request.OrderStatusRequestDTO;
-import kg.banksystem.deliverybackend.dto.order.response.OrdersResponseDTO;
-import kg.banksystem.deliverybackend.entity.Order;
+import kg.banksystem.deliverybackend.dto.order.response.OrderDetailResponseDTO;
+import kg.banksystem.deliverybackend.entity.OrderEntity;
 import kg.banksystem.deliverybackend.entity.response.BaseResponse;
+import kg.banksystem.deliverybackend.entity.response.PaginationResponse;
 import kg.banksystem.deliverybackend.enums.RestStatus;
 import kg.banksystem.deliverybackend.security.jwt.JwtTokenDecoder;
 import kg.banksystem.deliverybackend.service.OrderService;
@@ -32,75 +33,82 @@ public class BranchEmployeeRestController {
         this.jwtTokenDecoder = jwtTokenDecoder;
     }
 
+    // DONE
     @PostMapping("orders")
-    public ResponseEntity<BaseResponse> getAllOrdersForBranch(@RequestHeader(name = "Authorization") String token,
-                                                              @RequestBody OrderStatusRequestDTO orderStatusRequestDTO) {
-        log.info("Request status: {} for get orders for user branch.", orderStatusRequestDTO.getRequestStatus());
-
+    public ResponseEntity<PaginationResponse> getAllOrdersForBranch(@RequestHeader(name = "Authorization") String token, @RequestBody OrderStatusRequestDTO orderStatusRequestDTO, int page) {
+        Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
+        log.info("User with username: {} caused a response get all Orders for Branch.", tokenData.get("sub"));
+        log.info("Request status: {}.", orderStatusRequestDTO.getRequestStatus());
         if (orderStatusRequestDTO.getRequestStatus() == null) {
             log.error("Incorrect request status!");
-            return new ResponseEntity<>(new BaseResponse("Неверный статус запроса!", null, RestStatus.ERROR), HttpStatus.OK);
+            return new ResponseEntity<>(new PaginationResponse("Неверный статус запроса!", null, RestStatus.ERROR, 0), HttpStatus.OK);
         }
-
         if (!orderStatusRequestDTO.getRequestStatus().equals("new") &&
                 !orderStatusRequestDTO.getRequestStatus().equals("active") &&
                 !orderStatusRequestDTO.getRequestStatus().equals("destroyed")) {
             log.error("Incorrect request status!");
-            return new ResponseEntity<>(new BaseResponse("Неверный статус запроса!", null, RestStatus.ERROR), HttpStatus.OK);
+            return new ResponseEntity<>(new PaginationResponse("Неверный статус запроса!", null, RestStatus.ERROR, 0), HttpStatus.OK);
         }
-
-        Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
-        log.info("User request ID: {} for get orders for user branch.", tokenData.get("user_id"));
-        List<Order> orders = orderService.getOrdersForBranch(new Long(tokenData.get("user_id")), orderStatusRequestDTO.getRequestStatus());
-
-        if (orders == null) {
-            log.error("Orders data for branch not found.");
-            return new ResponseEntity<>(new BaseResponse("Заказы, отправленные в филиал, не найдены.", null, RestStatus.ERROR), HttpStatus.OK);
+        List<OrderEntity> orderEntityEntities = orderService.getOrdersForBranch(new Long(tokenData.get("user_id")), orderStatusRequestDTO.getRequestStatus(), page);
+        if (orderEntityEntities == null) {
+            log.error("Orders data for Branch not found.");
+            return new ResponseEntity<>(new PaginationResponse("Заказы, отправленные в филиал, не найдены.", null, RestStatus.ERROR, 0), HttpStatus.OK);
         } else {
-            List<OrdersResponseDTO> ordersResponseDTOS = new ArrayList<>();
-            orders.forEach(order -> ordersResponseDTOS.add(OrdersResponseDTO.orders(order)));
-            log.info("Orders all data for branch successfully found.");
-            return new ResponseEntity<>(new BaseResponse("Заказы, отправленные в филиал, успешно найдены.", ordersResponseDTOS, RestStatus.SUCCESS), HttpStatus.OK);
+            List<OrderDetailResponseDTO> ordersResponseDTOS = new ArrayList<>();
+            orderEntityEntities.forEach(order -> ordersResponseDTOS.add(OrderDetailResponseDTO.ordersForDetail(order)));
+            log.info("Orders all data for Branch successfully found.");
+            return new ResponseEntity<>(new PaginationResponse("Заказы, отправленные в филиал, успешно найдены.", ordersResponseDTOS, RestStatus.SUCCESS, orderService.orderPageCalculation(new Long(tokenData.get("user_id")), orderStatusRequestDTO.getRequestStatus(), page)), HttpStatus.OK);
         }
     }
 
-    @PostMapping("orders/change/ready_from_delivery")
-    public ResponseEntity<BaseResponse> changeReadyFromDelivery(@RequestHeader(name = "Authorization") String token,
-                                                                @RequestBody OrderIdRequestDTO orderIdRequestDTO) {
-        log.info("Order ID for change status: {}", orderIdRequestDTO.getId());
-
+    // DONE
+    @PostMapping("orders/change/ready-from-delivery")
+    public ResponseEntity<BaseResponse> changeReadyFromDelivery(@RequestHeader(name = "Authorization") String token, @RequestBody OrderIdRequestDTO orderIdRequestDTO) {
+        Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
+        log.info("User with username: {} caused a response for change Order status.", tokenData.get("sub"));
+        log.info("Order Id for change status: {}.", orderIdRequestDTO.getId());
         if (orderIdRequestDTO.getId() == null) {
-            log.error("Order ID is empty.");
+            log.error("Order Id is empty.");
             return new ResponseEntity<>(new BaseResponse("Заказ по указанному идентификатору не найден.", false, RestStatus.ERROR), HttpStatus.OK);
         } else {
             boolean response = orderService.setReadyFromDeliveryStatusForOrder(orderIdRequestDTO.getId());
             if (!response) {
-                log.error("Error changing order status to 'Ready for pickup'");
+                log.error("Error changing order status to 'Ready From Delivery'.");
                 return new ResponseEntity<>(new BaseResponse("Ошибка смены статуса заказа на 'Готов к выдаче'.", false, RestStatus.ERROR), HttpStatus.OK);
             } else {
-                log.info("The order has been successfully processed. Order status changed to 'Ready for Pickup'.");
+                log.info("The order has been successfully processed. Order status changed to 'Ready From Delivery'.");
                 return new ResponseEntity<>(new BaseResponse("Заказ успешно обработан. Статус заказа изменён на 'Готов к выдаче'.", true, RestStatus.SUCCESS), HttpStatus.OK);
             }
         }
     }
 
+    // DONE
     @PostMapping("orders/change/destroyed")
-    public ResponseEntity<BaseResponse> changeDestroyed(@RequestHeader(name = "Authorization") String token,
-                                                        @RequestBody OrderIdRequestDTO orderIdRequestDTO) {
-        log.info("Order ID for change status: {}", orderIdRequestDTO.getId());
-
+    public ResponseEntity<BaseResponse> changeDestroyed(@RequestHeader(name = "Authorization") String token, @RequestBody OrderIdRequestDTO orderIdRequestDTO) {
+        Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
+        log.info("User with username: {} caused a response for change Order status.", tokenData.get("sub"));
+        log.info("Order Id for change status: {}.", orderIdRequestDTO.getId());
         if (orderIdRequestDTO.getId() == null) {
-            log.error("Order ID is empty.");
+            log.error("Order Id is empty.");
             return new ResponseEntity<>(new BaseResponse("Заказ по указанному идентификатору не найден.", false, RestStatus.ERROR), HttpStatus.OK);
         } else {
             boolean response = orderService.setDestroyedStatusForOrder(orderIdRequestDTO.getId());
             if (!response) {
-                log.error("Error changing order status to 'Card destroyed'");
+                log.error("Error changing order status to 'Destroyed'.");
                 return new ResponseEntity<>(new BaseResponse("Ошибка смены статуса заказа на 'Карта уничтожена'.", false, RestStatus.ERROR), HttpStatus.OK);
             } else {
-                log.info("The order has been successfully processed. Order status changed to 'Card destroyed'.");
+                log.info("The order has been successfully processed. Order status changed to 'Destroyed'.");
                 return new ResponseEntity<>(new BaseResponse("Заказ успешно обработан. Статус заказа изменён на 'Карта уничтожена'.", true, RestStatus.SUCCESS), HttpStatus.OK);
             }
         }
+    }
+
+    // IN PROGRESS
+    @PostMapping("orders/qr")
+    public ResponseEntity<BaseResponse> getQrForOrder(@RequestHeader(name = "Authorization") String token, @RequestBody OrderIdRequestDTO orderIdRequestDTO) {
+        Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
+        log.info("User with username: {} caused a response for get QR for order.", tokenData.get("sub"));
+        log.info("Order Id for get QR: {}.", orderIdRequestDTO.getId());
+        return null;
     }
 }

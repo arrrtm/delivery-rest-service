@@ -3,7 +3,7 @@ package kg.banksystem.deliverybackend.rest;
 import kg.banksystem.deliverybackend.dto.user.request.EditAccountRequestDTO;
 import kg.banksystem.deliverybackend.dto.user.request.ResetPasswordRequestDTO;
 import kg.banksystem.deliverybackend.dto.user.response.UserResponseDTO;
-import kg.banksystem.deliverybackend.entity.User;
+import kg.banksystem.deliverybackend.entity.UserEntity;
 import kg.banksystem.deliverybackend.entity.response.BaseResponse;
 import kg.banksystem.deliverybackend.enums.RestStatus;
 import kg.banksystem.deliverybackend.security.jwt.JwtTokenDecoder;
@@ -34,41 +34,39 @@ public class AccountRestController {
         this.jwtTokenDecoder = jwtTokenDecoder;
     }
 
+    // DONE
     @PostMapping("view")
     public ResponseEntity<BaseResponse> getPersonalAccount(@RequestHeader(name = "Authorization") String token) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
-        log.info("User ID for get personal account: {}", tokenData.get("user_id"));
-        User user = userService.findById(new Long(tokenData.get("user_id")));
-        if (user == null) {
-            log.error("User data with user ID: {} not found.", tokenData.get("user_id"));
+        log.info("User with username: {} caused a response for get personal account.", tokenData.get("sub"));
+        UserEntity userEntity = userService.findUserById(new Long(tokenData.get("user_id")));
+        if (userEntity == null) {
+            log.error("User personal data with userId: {} not found.", tokenData.get("user_id"));
             return new ResponseEntity<>(new BaseResponse("Персональные данные пользователя не найдены.", null, RestStatus.ERROR), HttpStatus.OK);
         } else {
             Map<String, Object> userPersonalAccount = new HashMap<>();
-            userPersonalAccount.put("userData", UserResponseDTO.userPersonalAccount(user));
+            userPersonalAccount.put("userData", UserResponseDTO.userPersonalAccount(userEntity));
             userPersonalAccount.put("countCompleteDelivery", userService.completeDeliveryByUserId(new Long(tokenData.get("user_id"))));
-            log.info("User data with user ID: {} successfully found.", tokenData.get("user_id"));
+            log.info("User personal data with userId: {} successfully found.", tokenData.get("user_id"));
             return new ResponseEntity<>(new BaseResponse("Персональные данные успешно найдены.", userPersonalAccount, RestStatus.SUCCESS), HttpStatus.OK);
         }
     }
 
+    // DONE
     @PostMapping("edit")
-    public ResponseEntity<BaseResponse> editPersonalAccount(@RequestHeader(name = "Authorization") String token,
-                                                            @RequestBody EditAccountRequestDTO editAccountRequestDTO) {
-        log.info("Request status: {}", editAccountRequestDTO.getStatus());
+    public ResponseEntity<BaseResponse> editPersonalAccount(@RequestHeader(name = "Authorization") String token, @RequestBody EditAccountRequestDTO editAccountRequestDTO) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
-        log.info("User ID for editing: {}", tokenData.get("user_id"));
-
+        log.info("User with username: {} caused a response for edit personal account.", tokenData.get("sub"));
+        log.info("Request status: {}", editAccountRequestDTO.getStatus());
         if (editAccountRequestDTO.getStatus() == null) {
             log.error("Error request status.");
             return new ResponseEntity<>(new BaseResponse("Неверный статус запроса!", null, RestStatus.ERROR), HttpStatus.OK);
         }
-
         if (!editAccountRequestDTO.getStatus().equals("personal_data") &&
                 !editAccountRequestDTO.getStatus().equals("personal_password")) {
             log.error("Error request status.");
             return new ResponseEntity<>(new BaseResponse("Неверный статус запроса!", null, RestStatus.ERROR), HttpStatus.OK);
         }
-
         switch (editAccountRequestDTO.getStatus()) {
             case "personal_data":
                 boolean editPersonalData = accountService.editAccount(new Long(tokenData.get("user_id")), editAccountRequestDTO);
@@ -94,10 +92,10 @@ public class AccountRestController {
         }
     }
 
+    // DONE
     @PostMapping("password/reset")
     public ResponseEntity<BaseResponse> resetPersonalPassword(@RequestBody ResetPasswordRequestDTO resetPasswordRequestDTO) {
-        log.info("Username for reset password: {}", resetPasswordRequestDTO.getUsername());
-
+        log.info("Username for reset password: {}.", resetPasswordRequestDTO.getUsername());
         boolean resetStatus = accountService.resetPassword(resetPasswordRequestDTO);
         if (!resetStatus) {
             log.error("Error reset password.");

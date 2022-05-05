@@ -1,18 +1,16 @@
 package kg.banksystem.deliverybackend.rest;
 
 import kg.banksystem.deliverybackend.dto.admin.request.BranchRequestDTO;
-import kg.banksystem.deliverybackend.dto.order.request.OrderRequestDTO;
-import kg.banksystem.deliverybackend.dto.order.response.BranchResponseDTO;
-import kg.banksystem.deliverybackend.dto.order.response.OrdersResponseDTO;
+import kg.banksystem.deliverybackend.dto.admin.response.BranchResponseDTO;
 import kg.banksystem.deliverybackend.dto.user.request.UserRequestDTO;
 import kg.banksystem.deliverybackend.dto.user.response.UserResponseDTO;
-import kg.banksystem.deliverybackend.entity.Branch;
-import kg.banksystem.deliverybackend.entity.Order;
-import kg.banksystem.deliverybackend.entity.User;
+import kg.banksystem.deliverybackend.entity.BranchEntity;
+import kg.banksystem.deliverybackend.entity.UserEntity;
 import kg.banksystem.deliverybackend.entity.response.BaseResponse;
+import kg.banksystem.deliverybackend.entity.response.PaginationResponse;
 import kg.banksystem.deliverybackend.enums.RestStatus;
+import kg.banksystem.deliverybackend.security.jwt.JwtTokenDecoder;
 import kg.banksystem.deliverybackend.service.BranchService;
-import kg.banksystem.deliverybackend.service.OrderService;
 import kg.banksystem.deliverybackend.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -29,100 +28,151 @@ import java.util.List;
 public class AdminRestController {
 
     private final UserService userService;
-    private final OrderService orderService;
     private final BranchService branchService;
+    private final JwtTokenDecoder jwtTokenDecoder;
 
     @Autowired
-    public AdminRestController(UserService userService, OrderService orderService, BranchService branchService) {
+    public AdminRestController(UserService userService, BranchService branchService, JwtTokenDecoder jwtTokenDecoder) {
         this.userService = userService;
-        this.orderService = orderService;
         this.branchService = branchService;
+        this.jwtTokenDecoder = jwtTokenDecoder;
     }
 
+    // DONE
     @PostMapping("users")
-    public ResponseEntity<BaseResponse> getAllUsers(@RequestHeader(name = "Authorization") String token) {
-        List<User> users = userService.getAllUsers();
-        if (users.isEmpty()) {
-            log.error("User data not found.");
-            return new ResponseEntity<>(new BaseResponse("Пользовательские данные не найдены.", null, RestStatus.ERROR), HttpStatus.OK);
+    public ResponseEntity<PaginationResponse> getAllUsers(@RequestHeader(name = "Authorization") String token, int page) {
+        Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
+        log.info("User with username: {} caused a response get all Users.", tokenData.get("sub"));
+        List<UserEntity> userEntities = userService.getAllUsers(page);
+        if (userEntities.isEmpty()) {
+            log.error("Users data not found.");
+            return new ResponseEntity<>(new PaginationResponse("Пользовательские данные не найдены.", null, RestStatus.ERROR, userService.userPageCalculation(page)), HttpStatus.OK);
         } else {
             List<UserResponseDTO> userResponseDTOS = new ArrayList<>();
-            users.forEach(user -> userResponseDTOS.add(UserResponseDTO.userPersonalAccount(user)));
-            log.info("User all data successfully found.");
-            return new ResponseEntity<>(new BaseResponse("Пользователи успешно найдены.", userResponseDTOS, RestStatus.SUCCESS), HttpStatus.OK);
+            userEntities.forEach(user -> userResponseDTOS.add(UserResponseDTO.userPersonalAccount(user)));
+            log.info("Users all data successfully found.");
+            return new ResponseEntity<>(new PaginationResponse("Пользователи успешно найдены.", userResponseDTOS, RestStatus.SUCCESS, userService.userPageCalculation(page)), HttpStatus.OK);
         }
     }
 
+    // DONE
     @PostMapping("users/detail")
     public ResponseEntity<BaseResponse> getUserById(@RequestHeader(name = "Authorization") String token, @RequestBody UserRequestDTO userRequestDTO) {
-        log.info("Request user ID: {}", userRequestDTO.getId());
-
-        User user = userService.findById(userRequestDTO.getId());
-        if (user == null) {
-            log.error("User data for user with ID: {} not found.", userRequestDTO.getId());
+        Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
+        log.info("User with username: {} caused a response get User by Id.", tokenData.get("sub"));
+        log.info("Request User Id: {}.", userRequestDTO.getId());
+        UserEntity userEntity = userService.findUserById(userRequestDTO.getId());
+        if (userEntity == null) {
+            log.error("User data for User with Id: {} not found.", userRequestDTO.getId());
             return new ResponseEntity<>(new BaseResponse("Пользователь не найден.", null, RestStatus.ERROR), HttpStatus.OK);
         } else {
-            UserResponseDTO userResponseDTO = UserResponseDTO.userPersonalAccount(user);
-            log.info("User data for user with ID: {} successfully found.", userRequestDTO.getId());
-            return new ResponseEntity<>(new BaseResponse("Пользватель успешно найден.", userResponseDTO, RestStatus.SUCCESS), HttpStatus.OK);
+            UserResponseDTO userResponseDTO = UserResponseDTO.userPersonalAccount(userEntity);
+            log.info("User data for User with Id: {} successfully found.", userRequestDTO.getId());
+            return new ResponseEntity<>(new BaseResponse("Пользователь успешно найден.", userResponseDTO, RestStatus.SUCCESS), HttpStatus.OK);
         }
     }
 
+    // IN PROGRESS
+    @PostMapping("users/register")
+    public ResponseEntity<BaseResponse> userRegister(@RequestHeader(name = "Authorization") String token, @RequestBody UserRequestDTO userRequestDTO) {
+        return new ResponseEntity<>(new BaseResponse(null, null, null), HttpStatus.OK);
+    }
+
+    // IN PROGRESS
+    @PostMapping("users/update")
+    public ResponseEntity<BaseResponse> userUpdate(@RequestHeader(name = "Authorization") String token, @RequestBody UserRequestDTO userRequestDTO) {
+        return new ResponseEntity<>(new BaseResponse(null, null, null), HttpStatus.OK);
+    }
+
+    // IN PROGRESS
+    @PostMapping("users/remove")
+    public ResponseEntity<BaseResponse> userRemove(@RequestHeader(name = "Authorization") String token, @RequestBody UserRequestDTO userRequestDTO) {
+        return new ResponseEntity<>(new BaseResponse(null, null, null), HttpStatus.OK);
+    }
+
+    // DONE
     @PostMapping("branches")
-    public ResponseEntity<BaseResponse> getAllBranches(@RequestHeader(name = "Authorization") String token) {
-        List<Branch> branches = branchService.getAllBranches();
-        if (branches.isEmpty()) {
-            log.error("Branch data not found.");
-            return new ResponseEntity<>(new BaseResponse("Филиалы не найдены.", null, RestStatus.ERROR), HttpStatus.OK);
+    public ResponseEntity<PaginationResponse> getAllBranches(@RequestHeader(name = "Authorization") String token, int page) {
+        Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
+        log.info("User with username: {} caused a response get all Branches.", tokenData.get("sub"));
+        List<BranchEntity> branchEntities = branchService.getAllBranches(page);
+        if (branchEntities.isEmpty()) {
+            log.error("Branches data not found.");
+            return new ResponseEntity<>(new PaginationResponse("Филиалы не найдены.", null, RestStatus.ERROR, branchService.branchPageCalculation(page)), HttpStatus.OK);
         } else {
             List<BranchResponseDTO> branchResponseDTOS = new ArrayList<>();
-            branches.forEach(branch -> branchResponseDTOS.add(BranchResponseDTO.branchData(branch)));
-            log.info("Branch all data successfully found.");
-            return new ResponseEntity<>(new BaseResponse("Филиалы успешно найдены.", branchResponseDTOS, RestStatus.SUCCESS), HttpStatus.OK);
+            branchEntities.forEach(branch -> branchResponseDTOS.add(BranchResponseDTO.branchData(branch)));
+            log.info("Branches all data successfully found.");
+            return new ResponseEntity<>(new PaginationResponse("Филиалы успешно найдены.", branchResponseDTOS, RestStatus.SUCCESS, branchService.branchPageCalculation(page)), HttpStatus.OK);
         }
     }
 
+    // DONE
     @PostMapping("branches/detail")
     public ResponseEntity<BaseResponse> getBranchById(@RequestHeader(name = "Authorization") String token, @RequestBody BranchRequestDTO branchRequestDTO) {
-        log.info("Request branch ID: {}", branchRequestDTO.getId());
-
-        Branch branch = branchService.findById(branchRequestDTO.getId());
-        if (branch == null) {
-            log.error("Branch data for branch with ID: {} not found.", branchRequestDTO.getId());
+        Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
+        log.info("User with username: {} caused a response get Branch by Id.", tokenData.get("sub"));
+        log.info("Request Branch Id: {}.", branchRequestDTO.getId());
+        BranchEntity branchEntity = branchService.getBranchById(branchRequestDTO.getId());
+        if (branchEntity == null) {
+            log.error("Branch data for Branch with Id: {} not found.", branchRequestDTO.getId());
             return new ResponseEntity<>(new BaseResponse("Филиал не найден.", null, RestStatus.ERROR), HttpStatus.OK);
         } else {
-            BranchResponseDTO branchResponseDTO = BranchResponseDTO.branchData(branch);
-            log.info("Branch data for branch with ID: {} successfully found.", branchRequestDTO.getId());
+            BranchResponseDTO branchResponseDTO = BranchResponseDTO.branchData(branchEntity);
+            log.info("Branch data for Branch with Id: {} successfully found.", branchRequestDTO.getId());
             return new ResponseEntity<>(new BaseResponse("Филиал успешно найден.", branchResponseDTO, RestStatus.SUCCESS), HttpStatus.OK);
         }
     }
 
-    @PostMapping("orders")
-    public ResponseEntity<BaseResponse> getAllOrders(@RequestHeader(name = "Authorization") String token) {
-        List<Order> orders = orderService.getAllActiveOrders();
-        if (orders.isEmpty()) {
-            log.error("Orders data not found.");
-            return new ResponseEntity<>(new BaseResponse("Заказы не найдены.", null, RestStatus.ERROR), HttpStatus.OK);
+    // DONE
+    @PostMapping("branches/add")
+    public ResponseEntity<BaseResponse> branchAdd(@RequestHeader(name = "Authorization") String token, @RequestBody BranchRequestDTO branchRequestDTO) {
+        Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
+        log.info("User with username: {} caused a response add Branch.", tokenData.get("sub"));
+        if (branchService.addBranch(branchRequestDTO)) {
+            log.info("Branch data added successfully!");
+            return new ResponseEntity<>(new BaseResponse(("Новый филиал " + branchRequestDTO.getName() + " был успешно добавлен!"), null, RestStatus.SUCCESS), HttpStatus.OK);
         } else {
-            List<OrdersResponseDTO> ordersResponseDTOS = new ArrayList<>();
-            orders.forEach(order -> ordersResponseDTOS.add(OrdersResponseDTO.orders(order)));
-            log.info("Orders all data successfully found.");
-            return new ResponseEntity<>(new BaseResponse("Заказы успешно найдены.", ordersResponseDTOS, RestStatus.SUCCESS), HttpStatus.OK);
+            log.error("Branch data has not been added.");
+            return new ResponseEntity<>(new BaseResponse("Новый филиал не был добавлен, возможно он уже существует. Проверьте данные и повторите попытку ещё раз!", null, RestStatus.ERROR), HttpStatus.OK);
         }
     }
 
-    @PostMapping("orders/detail")
-    public ResponseEntity<BaseResponse> getOrderById(@RequestHeader(name = "Authorization") String token, @RequestBody OrderRequestDTO orderRequestDTO) {
-        log.info("Request order ID: {}", orderRequestDTO.getId());
-
-        Order order = orderService.findById(orderRequestDTO.getId());
-        if (order == null) {
-            log.error("Order data for order with ID: {} not found.", orderRequestDTO.getId());
-            return new ResponseEntity<>(new BaseResponse("Заказ не найден.", null, RestStatus.ERROR), HttpStatus.OK);
+    // DONE
+    @PostMapping("branches/edit")
+    public ResponseEntity<BaseResponse> branchEdit(@RequestHeader(name = "Authorization") String token, @RequestBody BranchRequestDTO branchRequestDTO) {
+        Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
+        log.info("User with username: {} caused a response edit Branch.", tokenData.get("sub"));
+        log.info("Request Branch Id for editing: {}.", branchRequestDTO.getId());
+        if (branchRequestDTO.getId() == null) {
+            log.error("Request Branch Id can not be empty!");
+            return new ResponseEntity<>(new BaseResponse("Идентификатор филиала не может быть пустым!", null, RestStatus.ERROR), HttpStatus.OK);
+        }
+        if (branchService.editBranch(branchRequestDTO)) {
+            log.info("Branch data updated successfully!");
+            return new ResponseEntity<>(new BaseResponse(("Филиал " + branchRequestDTO.getName() + " был успешно обновлён!"), null, RestStatus.SUCCESS), HttpStatus.OK);
         } else {
-            OrdersResponseDTO adminResponseDTO = OrdersResponseDTO.orders(order);
-            log.info("Order data for order with ID: {} successfully found.", orderRequestDTO.getId());
-            return new ResponseEntity<>(new BaseResponse("Заказ успешно найден.", adminResponseDTO, RestStatus.SUCCESS), HttpStatus.OK);
+            log.error("Branch data has not been updated.");
+            return new ResponseEntity<>(new BaseResponse("Филиал не был обновлён, возможно он уже существует. Проверьте данные и повторите попытку ещё раз!", null, RestStatus.ERROR), HttpStatus.OK);
+        }
+    }
+
+    // DONE
+    @PostMapping("branches/delete")
+    public ResponseEntity<BaseResponse> branchDelete(@RequestHeader(name = "Authorization") String token, @RequestBody BranchRequestDTO branchRequestDTO) {
+        Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
+        log.info("User with username: {} caused a response delete Branch.", tokenData.get("sub"));
+        log.info("Request Branch Id for deleting: {}.", branchRequestDTO.getId());
+        if (branchRequestDTO.getId() == null) {
+            log.error("Request Branch Id can not be empty!");
+            return new ResponseEntity<>(new BaseResponse("Идентификатор филиала не может быть пустым!", null, RestStatus.ERROR), HttpStatus.OK);
+        }
+        if (branchService.deleteBranch(branchRequestDTO)) {
+            log.info("Branch data deleted successfully!");
+            return new ResponseEntity<>(new BaseResponse("Филиал был успешно удалён!", null, RestStatus.SUCCESS), HttpStatus.OK);
+        } else {
+            log.error("Branch data has not been deleted.");
+            return new ResponseEntity<>(new BaseResponse("Филиал не был удалён. Проверьте данные и повторите попытку ещё раз!", null, RestStatus.ERROR), HttpStatus.OK);
         }
     }
 }

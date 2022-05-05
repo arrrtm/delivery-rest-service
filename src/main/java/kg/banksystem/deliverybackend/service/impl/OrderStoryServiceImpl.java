@@ -1,6 +1,6 @@
 package kg.banksystem.deliverybackend.service.impl;
 
-import kg.banksystem.deliverybackend.entity.OrderStory;
+import kg.banksystem.deliverybackend.entity.OrderStoryEntity;
 import kg.banksystem.deliverybackend.repository.OrderStoryRepository;
 import kg.banksystem.deliverybackend.repository.UserRepository;
 import kg.banksystem.deliverybackend.service.OrderStoryService;
@@ -23,32 +23,33 @@ public class OrderStoryServiceImpl implements OrderStoryService {
         this.userRepository = userRepository;
     }
 
+    // IN PROGRESS
     @Override
-    public List<OrderStory> getAllStoryOrder() {
+    public List<OrderStoryEntity> getAllOrderStory() {
         return null;
     }
 
     @Override
-    public List<OrderStory> getStoryOrderByCourierID(Long id) {
-        List<OrderStory> orders = orderStoryRepository.getStoryOrdersByUserID(userRepository.getById(id));
+    public List<OrderStoryEntity> getOrderStoryByCourierId(Long userId) {
+        List<OrderStoryEntity> orders = orderStoryRepository.getStoryOrdersByUser(userRepository.getById(userId));
         if (orders.isEmpty()) {
-            log.error("No story orders found by User ID: {}.", id);
+            log.error("No Story Orders found by Courier with userId: {}.", userId);
             return null;
         } else {
-            log.info("Story order: {} found by User ID: {}.", orders, id);
+            log.info("Story Orders: {} successfully found by Courier with userId: {}.", orders, userId);
             return orders;
         }
     }
 
     @Override
-    public OrderStory findById(Long id) {
-        OrderStory orderStory = orderStoryRepository.findById(id).orElse(null);
-        if (orderStory == null) {
-            log.error("No order story found by ID: {}.", id);
+    public OrderStoryEntity findOrderStoryById(Long orderId) {
+        OrderStoryEntity orderStoryEntity = orderStoryRepository.findById(orderId).orElse(null);
+        if (orderStoryEntity == null) {
+            log.error("No Order Story found by orderId: {}.", orderId);
             return null;
         } else {
-            log.info("Order story: {} found by ID: {}.", orderStory, id);
-            return orderStory;
+            log.info("Order Story: {} successfully found by orderId: {}.", orderStoryEntity, orderId);
+            return orderStoryEntity;
         }
     }
 }

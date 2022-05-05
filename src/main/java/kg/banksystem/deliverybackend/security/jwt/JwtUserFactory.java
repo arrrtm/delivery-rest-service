@@ -1,7 +1,7 @@
 package kg.banksystem.deliverybackend.security.jwt;
 
-import kg.banksystem.deliverybackend.entity.Role;
-import kg.banksystem.deliverybackend.entity.User;
+import kg.banksystem.deliverybackend.entity.RoleEntity;
+import kg.banksystem.deliverybackend.entity.UserEntity;
 import kg.banksystem.deliverybackend.enums.UserStatus;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
@@ -9,26 +9,26 @@ import java.util.Collections;
 
 public final class JwtUserFactory {
 
-    public static JwtUser create(User user) {
+    public static JwtUser create(UserEntity userEntity) {
         return new JwtUser(
-                user.getId(),
-                user.getUsername(),
-                user.getPassword(),
-                user.getUserFullName(),
-                user.getUserPhoneNumber(),
-                user.getEmail(),
-                user.getStatus().equals(UserStatus.ACTIVE),
-                Collections.singleton(mapToGrantedAuthorities(user.getRole())),
-                user.getBranch(),
-                user.getUpdated()
+                userEntity.getId(),
+                userEntity.getUsername(),
+                userEntity.getPassword(),
+                userEntity.getUserFullName(),
+                userEntity.getUserPhoneNumber(),
+                userEntity.getEmail(),
+                userEntity.getStatus().equals(UserStatus.ACTIVE),
+                Collections.singleton(mapToGrantedAuthorities(userEntity.getRoleEntity())),
+                userEntity.getBranchEntities(),
+                userEntity.getUpdatedDate()
         );
     }
 
-    private static SimpleGrantedAuthority mapToGrantedAuthorities(Role userRole) {
-        if (userRole == null) {
+    private static SimpleGrantedAuthority mapToGrantedAuthorities(RoleEntity userRoleEntity) {
+        if (userRoleEntity == null) {
             return null;
         } else {
-            return new SimpleGrantedAuthority(userRole.getName());
+            return new SimpleGrantedAuthority(userRoleEntity.getName());
         }
     }
 }

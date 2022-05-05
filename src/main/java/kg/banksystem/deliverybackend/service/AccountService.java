@@ -5,9 +5,9 @@ import kg.banksystem.deliverybackend.dto.user.request.ResetPasswordRequestDTO;
 
 public interface AccountService {
 
-    boolean editAccount(Long id, EditAccountRequestDTO requestDTO);
+    boolean editAccount(Long userId, EditAccountRequestDTO requestDTO);
 
-    boolean editPassword(Long id, EditAccountRequestDTO requestDTO);
+    boolean editPassword(Long userId, EditAccountRequestDTO requestDTO);
 
     boolean resetPassword(ResetPasswordRequestDTO resetPasswordRequestDTO);
 }

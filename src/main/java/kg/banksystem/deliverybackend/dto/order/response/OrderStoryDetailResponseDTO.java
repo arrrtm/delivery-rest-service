@@ -1,29 +1,32 @@
 package kg.banksystem.deliverybackend.dto.order.response;
 
-import kg.banksystem.deliverybackend.entity.OrderStory;
+import kg.banksystem.deliverybackend.dto.admin.response.BranchResponseDTO;
+import kg.banksystem.deliverybackend.dto.bank.response.CardResponseDTO;
+import kg.banksystem.deliverybackend.dto.bank.response.ClientResponseDTO;
+import kg.banksystem.deliverybackend.entity.OrderStoryEntity;
 import lombok.Data;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Data
 public class OrderStoryDetailResponseDTO {
-    private Date create;
+    private LocalDateTime createdDate;
     private String addressPickup;
     private String addressDelivery;
-    private ClientResponseDTO client;
     private String status;
+    private ClientResponseDTO client;
     private BranchResponseDTO branch;
     private CardResponseDTO card;
 
-    public static OrderStoryDetailResponseDTO ordersStoryForDetail(OrderStory orderStory) {
+    public static OrderStoryDetailResponseDTO ordersStoryForDetail(OrderStoryEntity orderStoryEntity) {
         OrderStoryDetailResponseDTO orderStoryDetailResponseDTO = new OrderStoryDetailResponseDTO();
-        orderStoryDetailResponseDTO.setCreate(orderStory.getCreated());
-        orderStoryDetailResponseDTO.setAddressPickup(orderStory.getAddressPickup());
-        orderStoryDetailResponseDTO.setAddressDelivery(orderStory.getAddressDelivery());
-        orderStoryDetailResponseDTO.setClient(ClientResponseDTO.clientData(orderStory.getClient()));
-        orderStoryDetailResponseDTO.setStatus(orderStory.getStatus().getValue());
-        orderStoryDetailResponseDTO.setBranch(BranchResponseDTO.branchData(orderStory.getBranch()));
-        orderStoryDetailResponseDTO.setCard(CardResponseDTO.cardData(orderStory.getCard()));
+        orderStoryDetailResponseDTO.setCreatedDate(orderStoryEntity.getCreatedDate());
+        orderStoryDetailResponseDTO.setAddressPickup(orderStoryEntity.getAddressPickup());
+        orderStoryDetailResponseDTO.setAddressDelivery(orderStoryEntity.getAddressDelivery());
+        orderStoryDetailResponseDTO.setStatus(orderStoryEntity.getStatus().getValue());
+        orderStoryDetailResponseDTO.setClient(ClientResponseDTO.clientData(orderStoryEntity.getClientEntity()));
+        orderStoryDetailResponseDTO.setBranch(BranchResponseDTO.branchData(orderStoryEntity.getBranchEntity()));
+        orderStoryDetailResponseDTO.setCard(CardResponseDTO.cardData(orderStoryEntity.getCardEntity()));
         return orderStoryDetailResponseDTO;
     }
 }

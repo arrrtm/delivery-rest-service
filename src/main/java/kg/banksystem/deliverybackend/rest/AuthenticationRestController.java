@@ -1,7 +1,7 @@
 package kg.banksystem.deliverybackend.rest;
 
 import kg.banksystem.deliverybackend.dto.auth.AuthenticationRequestDTO;
-import kg.banksystem.deliverybackend.entity.User;
+import kg.banksystem.deliverybackend.entity.UserEntity;
 import kg.banksystem.deliverybackend.entity.response.BaseResponse;
 import kg.banksystem.deliverybackend.enums.RestStatus;
 import kg.banksystem.deliverybackend.security.jwt.JwtTokenProvider;
@@ -31,28 +31,28 @@ public class AuthenticationRestController {
     private final UserService userService;
 
     @Autowired
-    public AuthenticationRestController(AuthenticationManager authenticationManager,
-                                        JwtTokenProvider jwtTokenProvider, UserService userService) {
+    public AuthenticationRestController(AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider, UserService userService) {
         this.authenticationManager = authenticationManager;
         this.jwtTokenProvider = jwtTokenProvider;
         this.userService = userService;
     }
 
+    // DONE
     @PostMapping("login")
     public ResponseEntity<BaseResponse> login(@RequestBody AuthenticationRequestDTO authenticationDTO) {
         String username = authenticationDTO.getUsername();
+        log.info("User with username: {} tried to login.", username);
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, authenticationDTO.getPassword()));
-            User user = userService.findByUsername(username);
-
-            if (user == null) {
+            UserEntity userEntity = userService.findByUsername(username);
+            if (userEntity == null) {
                 log.error("User with username: {} not found.", username);
                 return new ResponseEntity<>(new BaseResponse("Пользователь с логином: " + username + " не найден.", null, RestStatus.ERROR), HttpStatus.OK);
             } else {
                 boolean authReset = userService.authAttemptReset(username);
                 if (authReset) {
                     Map<Object, Object> response = new HashMap<>();
-                    String token = jwtTokenProvider.createToken(username, user.getId(), user.getRole().getName());
+                    String token = jwtTokenProvider.createToken(username, userEntity.getId(), userEntity.getRoleEntity().getName());
                     response.put("token", token);
                     log.info("User with username: {} successfully login.", username);
                     return new ResponseEntity<>(new BaseResponse("Пользователь с логином: " + username + " успешно авторизован.", response, RestStatus.SUCCESS), HttpStatus.OK);
@@ -61,7 +61,6 @@ public class AuthenticationRestController {
                     return new ResponseEntity<>(new BaseResponse("Неверный логин или пароль.", null, RestStatus.ERROR), HttpStatus.OK);
                 }
             }
-
         } catch (AuthenticationException e) {
             log.error("Invalid username or password.");
             String authResult = userService.authCheck(username);

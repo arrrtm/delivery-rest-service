@@ -1,15 +1,15 @@
 package kg.banksystem.deliverybackend.service;
 
-import kg.banksystem.deliverybackend.entity.OrderStory;
+import kg.banksystem.deliverybackend.entity.OrderStoryEntity;
 
 import java.util.List;
 
 public interface OrderStoryService {
 
-    // in progress
-    List<OrderStory> getAllStoryOrder();
+    // IN PROGRESS
+    List<OrderStoryEntity> getAllOrderStory();
 
-    List<OrderStory> getStoryOrderByCourierID(Long id);
+    List<OrderStoryEntity> getOrderStoryByCourierId(Long userId);
 
-    OrderStory findById(Long id);
+    OrderStoryEntity findOrderStoryById(Long orderId);
 }

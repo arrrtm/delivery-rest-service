@@ -1,12 +1,12 @@
 package kg.banksystem.deliverybackend.security.jwt;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import kg.banksystem.deliverybackend.entity.Branch;
+import kg.banksystem.deliverybackend.entity.BranchEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.Date;
 
 public class JwtUser implements UserDetails {
 
@@ -18,12 +18,12 @@ public class JwtUser implements UserDetails {
     private final String email;
     private final boolean status;
     private final Collection<? extends GrantedAuthority> role;
-    private final Collection<Branch> branch;
-    private final Date lastPasswordResetDate;
+    private final Collection<BranchEntity> branchEntityEntities;
+    private final LocalDateTime lastPasswordResetDate;
 
     public JwtUser(Long id, String username, String password, String userFullName,
                    String userPhoneNumber, String email, boolean status, Collection<? extends GrantedAuthority> role,
-                   Collection<Branch> branch, Date lastPasswordResetDate) {
+                   Collection<BranchEntity> branchEntityEntities, LocalDateTime lastPasswordResetDate) {
         this.id = id;
         this.username = username;
         this.password = password;
@@ -32,7 +32,7 @@ public class JwtUser implements UserDetails {
         this.email = email;
         this.status = status;
         this.role = role;
-        this.branch = branch;
+        this.branchEntityEntities = branchEntityEntities;
         this.lastPasswordResetDate = lastPasswordResetDate;
     }
 
@@ -81,8 +81,8 @@ public class JwtUser implements UserDetails {
         return role;
     }
 
-    public Collection<Branch> getBranch() {
-        return branch;
+    public Collection<BranchEntity> getBranch() {
+        return branchEntityEntities;
     }
 
     public String getUserFullName() {
@@ -97,7 +97,7 @@ public class JwtUser implements UserDetails {
         return email;
     }
 
-    public Date getLastPasswordResetDate() {
+    public LocalDateTime getLastPasswordResetDate() {
         return lastPasswordResetDate;
     }
 }

@@ -1,15 +1,15 @@
 package kg.banksystem.deliverybackend.dto.user.response;
 
-import kg.banksystem.deliverybackend.entity.Role;
+import kg.banksystem.deliverybackend.entity.RoleEntity;
 import lombok.Data;
 
 @Data
 public class RoleResponseDTO {
     private String name;
 
-    public static RoleResponseDTO roleData(Role role) {
+    public static RoleResponseDTO roleData(RoleEntity roleEntity) {
         RoleResponseDTO roleResponseDTO = new RoleResponseDTO();
-        switch (role.getName()) {
+        switch (roleEntity.getName()) {
             case "ADMIN":
                 roleResponseDTO.setName("Администратор");
                 break;

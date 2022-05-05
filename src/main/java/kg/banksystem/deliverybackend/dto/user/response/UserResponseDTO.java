@@ -1,12 +1,12 @@
 package kg.banksystem.deliverybackend.dto.user.response;
 
-import kg.banksystem.deliverybackend.dto.order.response.BranchResponseDTO;
-import kg.banksystem.deliverybackend.entity.Branch;
-import kg.banksystem.deliverybackend.entity.User;
+import kg.banksystem.deliverybackend.dto.admin.response.BranchResponseDTO;
+import kg.banksystem.deliverybackend.entity.BranchEntity;
+import kg.banksystem.deliverybackend.entity.UserEntity;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @Data
@@ -17,26 +17,25 @@ public class UserResponseDTO {
     private String userPhoneNumber;
     private String email;
     private String status;
-    private Date created;
-    private Date updated;
+    private LocalDateTime createdDate;
+    private LocalDateTime updatedDate;
     private RoleResponseDTO role;
     private List<BranchResponseDTO> branches;
 
-    public static UserResponseDTO userPersonalAccount(User user) {
+    public static UserResponseDTO userPersonalAccount(UserEntity userEntity) {
         UserResponseDTO userResponseDTO = new UserResponseDTO();
-        userResponseDTO.setId(user.getId());
-        userResponseDTO.setUsername(user.getUsername());
-        userResponseDTO.setUserFullName(user.getUserFullName());
-        userResponseDTO.setUserPhoneNumber(user.getUserPhoneNumber());
-        userResponseDTO.setEmail(user.getEmail());
-        userResponseDTO.setStatus(user.getStatus().getValue());
-        userResponseDTO.setCreated(user.getCreated());
-        userResponseDTO.setUpdated(user.getUpdated());
-        userResponseDTO.setRole(RoleResponseDTO.roleData(user.getRole()));
-
+        userResponseDTO.setId(userEntity.getId());
+        userResponseDTO.setUsername(userEntity.getUsername());
+        userResponseDTO.setUserFullName(userEntity.getUserFullName());
+        userResponseDTO.setUserPhoneNumber(userEntity.getUserPhoneNumber());
+        userResponseDTO.setEmail(userEntity.getEmail());
+        userResponseDTO.setStatus(userEntity.getStatus().getValue());
+        userResponseDTO.setCreatedDate(userEntity.getCreatedDate());
+        userResponseDTO.setUpdatedDate(userEntity.getUpdatedDate());
+        userResponseDTO.setRole(RoleResponseDTO.roleData(userEntity.getRoleEntity()));
         List<BranchResponseDTO> branchResponseDTOS = new ArrayList<>();
-        for (Branch branch : user.getBranch()) {
-            branchResponseDTOS.add(BranchResponseDTO.branchData(branch));
+        for (BranchEntity branchEntity : userEntity.getBranchEntities()) {
+            branchResponseDTOS.add(BranchResponseDTO.branchData(branchEntity));
         }
         userResponseDTO.setBranches(branchResponseDTOS);
         return userResponseDTO;

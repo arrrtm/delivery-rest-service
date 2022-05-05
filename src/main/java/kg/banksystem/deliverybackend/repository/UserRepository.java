@@ -1,16 +1,30 @@
 package kg.banksystem.deliverybackend.repository;
 
-import kg.banksystem.deliverybackend.entity.User;
+import kg.banksystem.deliverybackend.entity.UserEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.lang.NonNull;
 
-import java.util.List;
+import java.util.Optional;
 
-public interface UserRepository extends JpaRepository<User, Long> {
-    @Query(value = "SELECT COUNT(id) FROM stories WHERE stories.user_id = :id", nativeQuery = true)
-    Long completeDeliveryByUserId(Long id);
+public interface UserRepository extends JpaRepository<UserEntity, Long> {
+    @Query(value = "SELECT COUNT(id) FROM stories WHERE stories.user_entity_id = :userId", nativeQuery = true)
+    Long completeDeliveryByUserId(Long userId);
 
-    User findByUsername(String name);
+    @NonNull
+    @Override
+    @Query("select ue from UserEntity ue where ue.deleted = false")
+    Page<UserEntity> findAll(@NonNull Pageable pageable);
 
-    List<User> findByRole_Name(String role);
+    @NonNull
+    @Override
+    @Query("select ue from UserEntity ue where ue.deleted = false and ue.id = ?1")
+    Optional<UserEntity> findById(@NonNull Long userId);
+
+    @Query("select ue from UserEntity ue where ue.deleted = false and ue.roleEntity.name = ?1")
+    Page<UserEntity> findByRoleName(String role, Pageable pageable);
+
+    UserEntity findByUsername(String name);
 }

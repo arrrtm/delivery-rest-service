@@ -1,19 +1,19 @@
 package kg.banksystem.deliverybackend.dto.order.response;
 
-import kg.banksystem.deliverybackend.entity.Order;
+import kg.banksystem.deliverybackend.entity.OrderEntity;
 import lombok.Data;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Data
 public class OrderBriefResponseDTO {
     private Long id;
-    private Date created;
+    private LocalDateTime created;
 
-    public static OrderBriefResponseDTO orderBriefDTO(Order order) {
+    public static OrderBriefResponseDTO orderBriefDTO(OrderEntity orderEntity) {
         OrderBriefResponseDTO orderBriefResponseDTO = new OrderBriefResponseDTO();
-        orderBriefResponseDTO.setId(order.getId());
-        orderBriefResponseDTO.setCreated(order.getCreated());
+        orderBriefResponseDTO.setId(orderEntity.getId());
+        orderBriefResponseDTO.setCreated(orderEntity.getCreatedDate());
         return orderBriefResponseDTO;
     }
 }

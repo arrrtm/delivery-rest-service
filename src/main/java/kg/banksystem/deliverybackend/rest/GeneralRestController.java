@@ -4,13 +4,15 @@ import kg.banksystem.deliverybackend.dto.order.request.OrderRequestDTO;
 import kg.banksystem.deliverybackend.dto.order.response.OrderDetailResponseDTO;
 import kg.banksystem.deliverybackend.dto.order.response.OrderStoryDetailResponseDTO;
 import kg.banksystem.deliverybackend.dto.user.response.RoleResponseDTO;
-import kg.banksystem.deliverybackend.entity.Order;
-import kg.banksystem.deliverybackend.entity.OrderStory;
-import kg.banksystem.deliverybackend.entity.Role;
-import kg.banksystem.deliverybackend.entity.User;
+import kg.banksystem.deliverybackend.entity.OrderEntity;
+import kg.banksystem.deliverybackend.entity.OrderStoryEntity;
+import kg.banksystem.deliverybackend.entity.RoleEntity;
+import kg.banksystem.deliverybackend.entity.UserEntity;
 import kg.banksystem.deliverybackend.entity.response.BaseResponse;
+import kg.banksystem.deliverybackend.entity.response.PaginationResponse;
 import kg.banksystem.deliverybackend.enums.RestStatus;
 import kg.banksystem.deliverybackend.security.jwt.JwtTokenDecoder;
+import kg.banksystem.deliverybackend.service.BranchService;
 import kg.banksystem.deliverybackend.service.OrderService;
 import kg.banksystem.deliverybackend.service.OrderStoryService;
 import kg.banksystem.deliverybackend.service.UserService;
@@ -20,6 +22,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -31,22 +35,24 @@ public class GeneralRestController {
     private final UserService userService;
     private final OrderService orderService;
     private final OrderStoryService orderStoryService;
+    private final BranchService branchService;
 
     @Autowired
-    public GeneralRestController(JwtTokenDecoder jwtTokenDecoder, UserService userService, OrderService orderService, OrderStoryService orderStoryService) {
+    public GeneralRestController(JwtTokenDecoder jwtTokenDecoder, UserService userService, OrderService orderService, OrderStoryService orderStoryService, BranchService branchService) {
         this.jwtTokenDecoder = jwtTokenDecoder;
         this.userService = userService;
         this.orderService = orderService;
         this.orderStoryService = orderStoryService;
+        this.branchService = branchService;
     }
 
+    // DONE
     @PostMapping("get/role")
     public ResponseEntity<BaseResponse> getRoleByToken(@RequestHeader(name = "Authorization") String token) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
-        User user = userService.findByUsername(tokenData.get("sub"));
-        Role role = user.getRole();
-        log.info("User Login: {} for get User Role.", tokenData.get("sub"));
-        RoleResponseDTO roleData = RoleResponseDTO.roleData(role);
+        UserEntity userEntity = userService.findByUsername(tokenData.get("sub"));
+        RoleEntity roleEntity = userEntity.getRoleEntity();
+        RoleResponseDTO roleData = RoleResponseDTO.roleData(roleEntity);
         if (roleData == null) {
             return new ResponseEntity<>(new BaseResponse("Роль пользователя не найдена.", null, RestStatus.ERROR), HttpStatus.OK);
         } else {
@@ -54,52 +60,93 @@ public class GeneralRestController {
         }
     }
 
+    // DONE
     @PostMapping("get/name")
     public ResponseEntity<BaseResponse> getNameByToken(@RequestHeader(name = "Authorization") String token) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
-        User user = userService.findByUsername(tokenData.get("sub"));
-        log.info("User Login: {} for get Full Name.", tokenData.get("sub"));
-        if (user.getUserFullName() == null) {
+        UserEntity userEntity = userService.findByUsername(tokenData.get("sub"));
+        if (userEntity.getUserFullName() == null) {
             return new ResponseEntity<>(new BaseResponse("Полное имя пользователя не найдено.", null, RestStatus.ERROR), HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(new BaseResponse("Полное имя пользователя найдено.", user.getUserFullName(), RestStatus.SUCCESS), HttpStatus.OK);
+            return new ResponseEntity<>(new BaseResponse("Полное имя пользователя найдено.", userEntity.getUserFullName(), RestStatus.SUCCESS), HttpStatus.OK);
         }
     }
 
-    @PostMapping("orders/detail")
-    public ResponseEntity<BaseResponse> getAllOrdersDetail(@RequestHeader(name = "Authorization") String token, @RequestBody OrderRequestDTO orderRequestDTO) {
-        log.info("Request order ID: {}", orderRequestDTO.getId());
-        log.info("Request detail status: {}", orderRequestDTO.getRequestStatus());
+    // DONE
+    @PostMapping("orders")
+    public ResponseEntity<PaginationResponse> getAllOrders(@RequestHeader(name = "Authorization") String token, int page, Long orderNumber, String branchName) {
+        Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
+        log.info("User with username: {} caused a response get all Orders.", tokenData.get("sub"));
+        List<OrderEntity> orderEntities = orderService.getAllActiveOrders(page, orderNumber, branchName);
+        if (orderEntities == null) {
+            log.error("Order data not found.");
+            return new ResponseEntity<>(new PaginationResponse(("Заказ но номеру: " + orderNumber + " не найден."), null, RestStatus.ERROR, orderService.orderPageCalculation(new Long(tokenData.get("user_id")), "", page)), HttpStatus.OK);
+        }
+        if (orderEntities.isEmpty()) {
+            log.error("Orders data not found.");
+            return new ResponseEntity<>(new PaginationResponse("Заказы не найдены.", null, RestStatus.ERROR, orderService.orderPageCalculation(new Long(tokenData.get("user_id")), "", page)), HttpStatus.OK);
+        } else {
+            List<OrderDetailResponseDTO> ordersResponseDTOS = new ArrayList<>();
+            orderEntities.forEach(order -> ordersResponseDTOS.add(OrderDetailResponseDTO.ordersForDetail(order)));
+            log.info("Orders all data successfully found.");
+            if (branchName != null) {
+                return new ResponseEntity<>(new PaginationResponse("Заказы успешно найдены.", ordersResponseDTOS, RestStatus.SUCCESS, orderService.orderWithBranchPageCalculation(page, branchName)), HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(new PaginationResponse("Заказы успешно найдены.", ordersResponseDTOS, RestStatus.SUCCESS, orderService.orderPageCalculation(new Long(tokenData.get("user_id")), "", page)), HttpStatus.OK);
+            }
+        }
+    }
 
+    // DONE
+    @PostMapping("orders/detail")
+    public ResponseEntity<BaseResponse> getOrderById(@RequestHeader(name = "Authorization") String token, @RequestBody OrderRequestDTO orderRequestDTO) {
+        Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
+        log.info("User with username: {} caused a response for get Orders Detail.", tokenData.get("sub"));
+        log.info("Request Order Id: {}.", orderRequestDTO.getId());
+        log.info("Request detail status: {}.", orderRequestDTO.getRequestStatus());
         if (orderRequestDTO.getRequestStatus() == null) {
             log.error("Incorrect status!");
             return new ResponseEntity<>(new BaseResponse("Неверный статус запроса!", null, RestStatus.ERROR), HttpStatus.OK);
         }
-
         switch (orderRequestDTO.getRequestStatus()) {
             case "new_accepted":
-                Order order = orderService.findById(orderRequestDTO.getId());
-                if (order == null) {
-                    log.error("Order with ID: {} not found.", orderRequestDTO.getId());
+                OrderEntity orderEntity = orderService.findOrderById(orderRequestDTO.getId());
+                if (orderEntity == null) {
+                    log.error("Order with Id: {} not found.", orderRequestDTO.getId());
                     return new ResponseEntity<>(new BaseResponse("Заказ не найден.", null, RestStatus.ERROR), HttpStatus.OK);
                 } else {
-                    log.info("Order data for order with ID: {} successfully found.", orderRequestDTO.getId());
-                    OrderDetailResponseDTO orderDetailResponseDTO = OrderDetailResponseDTO.ordersForDetail(order);
+                    log.info("Order data for Order with Id: {} successfully found.", orderRequestDTO.getId());
+                    OrderDetailResponseDTO orderDetailResponseDTO = OrderDetailResponseDTO.ordersForDetail(orderEntity);
                     return new ResponseEntity<>(new BaseResponse("Заказ успешно найден.", orderDetailResponseDTO, RestStatus.SUCCESS), HttpStatus.OK);
                 }
             case "story":
-                OrderStory orderStory = orderStoryService.findById(orderRequestDTO.getId());
-                if (orderStory == null) {
-                    log.error("Order with ID: {} not found.", orderRequestDTO.getId());
+                OrderStoryEntity orderStoryEntity = orderStoryService.findOrderStoryById(orderRequestDTO.getId());
+                if (orderStoryEntity == null) {
+                    log.error("Order with Id: {} not found.", orderRequestDTO.getId());
                     return new ResponseEntity<>(new BaseResponse("История заказов не найдена.", null, RestStatus.ERROR), HttpStatus.OK);
                 } else {
-                    log.info("Order story for order with ID: {} successfully found.", orderRequestDTO.getId());
-                    OrderStoryDetailResponseDTO orderStoryDetailResponseDTO = OrderStoryDetailResponseDTO.ordersStoryForDetail(orderStory);
+                    log.info("Order Story data for Order with Id: {} successfully found.", orderRequestDTO.getId());
+                    OrderStoryDetailResponseDTO orderStoryDetailResponseDTO = OrderStoryDetailResponseDTO.ordersStoryForDetail(orderStoryEntity);
                     return new ResponseEntity<>(new BaseResponse("История заказов успешно найдена.", orderStoryDetailResponseDTO, RestStatus.SUCCESS), HttpStatus.OK);
                 }
             default:
                 log.error("Incorrect status!");
                 return new ResponseEntity<>(new BaseResponse("Неверный статус запроса!", null, RestStatus.ERROR), HttpStatus.OK);
+        }
+    }
+
+    // DONE
+    @PostMapping("branches")
+    public ResponseEntity<BaseResponse> getBranchNames(@RequestHeader(name = "Authorization") String token) {
+        Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
+        log.info("User with username: {} caused a response for get Branch Names.", tokenData.get("sub"));
+        List<String> branchNames = branchService.getBranchNames();
+        if (branchNames.isEmpty()) {
+            log.error("Branches data not found.");
+            return new ResponseEntity<>(new BaseResponse("Филиалы не найдены.", null, RestStatus.ERROR), HttpStatus.OK);
+        } else {
+            log.info("Branches data successfully found!");
+            return new ResponseEntity<>(new BaseResponse("Наименования филиалов успешно найдены!", branchNames, RestStatus.SUCCESS), HttpStatus.OK);
         }
     }
 }

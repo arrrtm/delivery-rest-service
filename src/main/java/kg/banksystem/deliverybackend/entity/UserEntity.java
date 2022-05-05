@@ -1,16 +1,21 @@
 package kg.banksystem.deliverybackend.entity;
 
-import kg.banksystem.deliverybackend.entity.abstracts.DeleteDataAbstract;
+import kg.banksystem.deliverybackend.entity.base.ModifyBase;
 import kg.banksystem.deliverybackend.enums.UserStatus;
-import lombok.Data;
+import lombok.*;
+import org.hibernate.Hibernate;
 
 import javax.persistence.*;
 import java.util.Collection;
+import java.util.Objects;
 
-@Data
+@Getter
+@Setter
+@ToString
+@RequiredArgsConstructor
 @Entity
 @Table(name = "users")
-public class User extends DeleteDataAbstract {
+public class UserEntity extends ModifyBase {
 
     @Column(name = "username", unique = true, nullable = false)
     private String username;
@@ -36,8 +41,22 @@ public class User extends DeleteDataAbstract {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = false)
-    private Role role;
+    private RoleEntity roleEntity;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    private Collection<Branch> branch;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @ToString.Exclude
+    private Collection<BranchEntity> branchEntities;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        UserEntity userEntity = (UserEntity) o;
+        return getId() != null && Objects.equals(getId(), userEntity.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

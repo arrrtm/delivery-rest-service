@@ -36,4 +36,6 @@ public interface UserService {
     int userPageCalculation(int page);
 
     UserEntity findByUsername(String username);
+
+    List<UserEntity> getCouriers();
 }

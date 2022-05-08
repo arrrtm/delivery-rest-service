@@ -31,16 +31,19 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
     @Query(value = "SELECT * FROM orders INNER JOIN users_branch_entities ON users_branch_entities.branch_entities_id = orders.branch_entity_id WHERE orders.status = 'DESTROYED' AND users_branch_entities.user_entity_id = ?1 ORDER BY updated DESC", nativeQuery = true)
     Page<OrderEntity> getDestroyedOrdersForBranchByUserId(Pageable pageable, Long userId);
 
-    @NonNull
-    @Override
-    @Query("select oe from OrderEntity oe where oe.status <> 'RECEIVED_BY_CLIENT' and oe.status <> 'DESTROYED' and oe.deleted = false")
-    Page<OrderEntity> findAll(@NonNull Pageable pageable);
-
     @Query("select oe from OrderEntity oe where oe.status <> 'RECEIVED_BY_CLIENT' and oe.status <> 'DESTROYED' and oe.deleted = false and oe.branchEntity.name = ?1")
     Page<OrderEntity> findAllByBranch(Pageable pageable, String branchName);
 
     @NonNull
     @Override
+    @Query("select oe from OrderEntity oe where oe.status <> 'RECEIVED_BY_CLIENT' and oe.status <> 'DESTROYED' and oe.deleted = false")
+    Page<OrderEntity> findAll(@NonNull Pageable pageable);
+
+    @NonNull
+    @Override
     @Query("select oe from OrderEntity oe where oe.deleted = false and oe.id = ?1")
     Optional<OrderEntity> findById(@NonNull Long orderId);
+
+    @Query("select qrte.path from QrCodeTemporaryEntity qrte where qrte.orderId = ?1")
+    Optional<String> getQrName(Long orderId);
 }

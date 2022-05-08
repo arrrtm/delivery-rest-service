@@ -4,6 +4,7 @@ import kg.banksystem.deliverybackend.dto.order.request.OrderRequestDTO;
 import kg.banksystem.deliverybackend.dto.order.response.OrderDetailResponseDTO;
 import kg.banksystem.deliverybackend.dto.order.response.OrderStoryDetailResponseDTO;
 import kg.banksystem.deliverybackend.dto.user.response.RoleResponseDTO;
+import kg.banksystem.deliverybackend.dto.user.response.UserResponseDTO;
 import kg.banksystem.deliverybackend.entity.OrderEntity;
 import kg.banksystem.deliverybackend.entity.OrderStoryEntity;
 import kg.banksystem.deliverybackend.entity.RoleEntity;
@@ -97,6 +98,31 @@ public class GeneralRestController {
         }
     }
 
+    // ALMOST DONE
+    @PostMapping("story")
+    public ResponseEntity<PaginationResponse> getAllOrdersStory(@RequestHeader(name = "Authorization") String token, int page, Long orderNumber, String branchName, Long courierId) {
+        Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
+        log.info("User with username: {} caused a response get all Orders Story.", tokenData.get("sub"));
+        List<OrderStoryEntity> orderStoryEntities = orderStoryService.getAllOrderStory(page, orderNumber, branchName, courierId);
+        if (orderStoryEntities == null) {
+            log.error("Story data not found.");
+            return new ResponseEntity<>(new PaginationResponse(("История заказа но номеру: " + orderNumber + " не найдена."), null, RestStatus.ERROR, orderStoryService.orderStoryPageCalculation(page, branchName, courierId)), HttpStatus.OK);
+        }
+        if (orderStoryEntities.isEmpty()) {
+            log.error("Story data not found.");
+            return new ResponseEntity<>(new PaginationResponse("Историй заказов не найдено.", null, RestStatus.ERROR, orderStoryService.orderStoryPageCalculation(page, branchName, courierId)), HttpStatus.OK);
+        } else {
+            try {
+                List<OrderStoryDetailResponseDTO> ordersResponseDTOS = new ArrayList<>();
+                orderStoryEntities.forEach(order -> ordersResponseDTOS.add(OrderStoryDetailResponseDTO.ordersStoryForDetail(order)));
+                log.info("Story all data successfully found.");
+                return new ResponseEntity<>(new PaginationResponse("Истории заказов успешно найдены.", ordersResponseDTOS, RestStatus.SUCCESS, orderStoryService.orderStoryPageCalculation(page, branchName, courierId)), HttpStatus.OK);
+            } catch (NullPointerException npe) {
+                return new ResponseEntity<>(new PaginationResponse(("История заказа но номеру: " + orderNumber + " не найдена."), null, RestStatus.ERROR, orderStoryService.orderStoryPageCalculation(page, branchName, courierId)), HttpStatus.OK);
+            }
+        }
+    }
+
     // DONE
     @PostMapping("orders/detail")
     public ResponseEntity<BaseResponse> getOrderById(@RequestHeader(name = "Authorization") String token, @RequestBody OrderRequestDTO orderRequestDTO) {
@@ -122,7 +148,7 @@ public class GeneralRestController {
             case "story":
                 OrderStoryEntity orderStoryEntity = orderStoryService.findOrderStoryById(orderRequestDTO.getId());
                 if (orderStoryEntity == null) {
-                    log.error("Order with Id: {} not found.", orderRequestDTO.getId());
+                    log.error("Order Story with Id: {} not found.", orderRequestDTO.getId());
                     return new ResponseEntity<>(new BaseResponse("История заказов не найдена.", null, RestStatus.ERROR), HttpStatus.OK);
                 } else {
                     log.info("Order Story data for Order with Id: {} successfully found.", orderRequestDTO.getId());
@@ -147,6 +173,23 @@ public class GeneralRestController {
         } else {
             log.info("Branches data successfully found!");
             return new ResponseEntity<>(new BaseResponse("Наименования филиалов успешно найдены!", branchNames, RestStatus.SUCCESS), HttpStatus.OK);
+        }
+    }
+
+    // DONE
+    @PostMapping("couriers")
+    public ResponseEntity<BaseResponse> getCouriers(@RequestHeader(name = "Authorization") String token) {
+        Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
+        log.info("User with username: {} caused a response for get Couriers.", tokenData.get("sub"));
+        List<UserEntity> couriers = userService.getCouriers();
+        if (couriers.isEmpty()) {
+            log.error("Couriers data not found.");
+            return new ResponseEntity<>(new BaseResponse("Курьеры не найдены.", null, RestStatus.ERROR), HttpStatus.OK);
+        } else {
+            List<UserResponseDTO> userResponseDTOS = new ArrayList<>();
+            couriers.forEach(user -> userResponseDTOS.add(UserResponseDTO.userPersonalAccount(user)));
+            log.info("Couriers data successfully found!");
+            return new ResponseEntity<>(new BaseResponse("Курьеры успешно найдены!", userResponseDTOS, RestStatus.SUCCESS), HttpStatus.OK);
         }
     }
 }

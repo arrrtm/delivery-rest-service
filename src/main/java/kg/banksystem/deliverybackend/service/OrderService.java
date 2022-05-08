@@ -45,4 +45,6 @@ public interface OrderService {
     int orderPageCalculation(Long userId, String status, int page);
 
     int orderWithBranchPageCalculation(int page, String branchName);
+
+    String getQrUniqueName(Long orderId);
 }

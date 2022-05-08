@@ -28,18 +28,6 @@ public class BranchServiceImpl implements BranchService {
     }
 
     @Override
-    public Long findBranchIdByUserId(Long userId) {
-        Long branch = branchRepository.findBranchIdByUserId(userId);
-        if (branch == null) {
-            log.error("Branch Id not found by User with userId: {}", userId);
-            return null;
-        } else {
-            log.info("Branch Id: {} successfully found by User with userId: {}", branch, userId);
-            return branch;
-        }
-    }
-
-    @Override
     public List<BranchEntity> getAllBranches(int page) {
         Page<BranchEntity> branchEntities = branchRepository.findAll(PageRequest.of(page, 5, Sort.by("updatedDate").descending()));
         log.info("{} branches found.", branchEntities.getContent().size());

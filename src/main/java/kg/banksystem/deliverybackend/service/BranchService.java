@@ -7,8 +7,6 @@ import java.util.List;
 
 public interface BranchService {
 
-    Long findBranchIdByUserId(Long userId);
-
     List<BranchEntity> getAllBranches(int page);
 
     BranchEntity getBranchById(Long branchId);

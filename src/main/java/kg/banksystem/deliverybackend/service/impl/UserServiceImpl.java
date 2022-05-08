@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -206,5 +207,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserEntity findByUsername(String username) {
         return userRepository.findByUsername(username);
+    }
+
+    @Override
+    public List<UserEntity> getCouriers() {
+        return userRepository.findAll()
+                .stream().filter(user -> !user.isDeleted())
+                .filter(user -> user.getRoleEntity().getName().equals("COURIER"))
+                .collect(Collectors.toList());
     }
 }

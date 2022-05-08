@@ -8,12 +8,12 @@ import java.time.LocalDateTime;
 @Data
 public class OrderBriefResponseDTO {
     private Long id;
-    private LocalDateTime created;
+    private LocalDateTime createdDate;
 
     public static OrderBriefResponseDTO orderBriefDTO(OrderEntity orderEntity) {
         OrderBriefResponseDTO orderBriefResponseDTO = new OrderBriefResponseDTO();
         orderBriefResponseDTO.setId(orderEntity.getId());
-        orderBriefResponseDTO.setCreated(orderEntity.getCreatedDate());
+        orderBriefResponseDTO.setCreatedDate(orderEntity.getCreatedDate());
         return orderBriefResponseDTO;
     }
 }

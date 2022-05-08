@@ -46,7 +46,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final OrderStoryRepository orderStoryRepository;
-    private final BranchServiceImpl branchService;
+    private final BranchRepository branchRepository;
     private final ClientRepository clientRepository;
     private final QrCodeRepository qrCodeRepository;
 
@@ -59,11 +59,11 @@ public class OrderServiceImpl implements OrderService {
     private String urlIdentificationService;
 
     @Autowired
-    public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository, OrderStoryRepository orderStoryRepository, BranchServiceImpl branchService, ClientRepository clientRepository, QrCodeRepository qrCodeRepository) {
+    public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository, OrderStoryRepository orderStoryRepository, BranchRepository branchRepository, ClientRepository clientRepository, QrCodeRepository qrCodeRepository) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.orderStoryRepository = orderStoryRepository;
-        this.branchService = branchService;
+        this.branchRepository = branchRepository;
         this.clientRepository = clientRepository;
         this.qrCodeRepository = qrCodeRepository;
     }
@@ -154,7 +154,11 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<OrderEntity> getAllNewOrdersByUserId(Long userId) {
-        Long branchId = branchService.findBranchIdByUserId(userId);
+        Long branchId = branchRepository.findBranchIdByUserId(userId);
+        if (branchId == null) {
+            log.error("Branch Id not found by User with userId: {}", userId);
+            return null;
+        }
         List<OrderEntity> orderEntities = orderRepository.getAllNewOrdersByBranchId(branchId);
         if (orderEntities.isEmpty()) {
             log.error("No new orders found by User with userId: {}.", userId);
@@ -192,9 +196,8 @@ public class OrderServiceImpl implements OrderService {
             orderEntity.getUserEntities().add(userRepository.getById(userId));
             orderEntity.setStatus(OrderStatus.TAKEN_BY_COURIER);
             orderRepository.save(orderEntity);
-
-            String path = createQrToServer((orderId + " " + userId));
-            QrCodeTemporaryEntity qrCodeTemporaryEntity = new QrCodeTemporaryEntity(orderId, userId, path);
+            String uniqueName = createQrToServer((orderId + " " + userId));
+            QrCodeTemporaryEntity qrCodeTemporaryEntity = new QrCodeTemporaryEntity(orderId, userId, uniqueName);
             qrCodeRepository.save(qrCodeTemporaryEntity);
             log.info("Order with orderId: {} accepted by Courier with userId: {}.", orderId, userId);
             return true;
@@ -219,7 +222,6 @@ public class OrderServiceImpl implements OrderService {
             } else {
                 orderEntity.setStatus(OrderStatus.HANDED_OVER_TO_THE_COURIER);
                 orderRepository.save(orderEntity);
-
                 QrCodeTemporaryEntity qrCodeTemporaryEntity = qrCodeRepository.findByOrderIdAndUserId(orderId, userId);
                 deleteQrFromServer(qrCodeTemporaryEntity.getPath().trim());
                 qrCodeRepository.delete(qrCodeTemporaryEntity);
@@ -282,9 +284,9 @@ public class OrderServiceImpl implements OrderService {
             orderStoryEntity.setClientEntity(orderEntity.getClientEntity());
             orderStoryEntity.setBranchEntity(orderEntity.getBranchEntity());
             orderStoryEntity.setCardEntity(orderEntity.getCardEntity());
+            orderStoryEntity.setOrderNumber(orderEntity.getId());
             orderStoryEntity.setComment(comment);
             orderStoryEntity.setUserEntity(userRepository.getById(userId));
-
             switch (requestStatus) {
                 case "identification_client_error":
                     orderEntity.setStatus(OrderStatus.READY_FROM_DELIVERY);
@@ -378,15 +380,22 @@ public class OrderServiceImpl implements OrderService {
         return orders.getTotalPages();
     }
 
-    private String createQrToServer(String data) throws WriterException, IOException {
-        String fullPath = pathQR + LocalDateTime.now().toString().replace(":", "-") + ".png";
-        BitMatrix matrix = new MultiFormatWriter().encode(new String(data.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8), BarcodeFormat.QR_CODE, 200, 200);
-        MatrixToImageWriter.writeToFile(matrix, fullPath.substring(fullPath.lastIndexOf('.') + 1), new File(fullPath));
-        return fullPath;
+    @Override
+    public String getQrUniqueName(Long orderId) {
+        return orderRepository.getQrName(orderId).orElse(null);
     }
 
-    private void deleteQrFromServer(String path) {
-        File fileForDelete = new File(path);
+    private String createQrToServer(String data) throws WriterException, IOException {
+        String uniqueName = LocalDateTime.now().toString().replace(":", "-") + ".png";
+        String fullPath = pathQR + uniqueName;
+        BitMatrix matrix = new MultiFormatWriter().encode(new String(data.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8), BarcodeFormat.QR_CODE, 200, 200);
+        MatrixToImageWriter.writeToFile(matrix, fullPath.substring(fullPath.lastIndexOf('.') + 1), new File(fullPath));
+        log.info("Created QR-code along the way: {}", fullPath);
+        return uniqueName;
+    }
+
+    private void deleteQrFromServer(String uniqueName) {
+        File fileForDelete = new File(pathQR + uniqueName);
         if (fileForDelete.delete()) {
             log.info("QR code successfully deleted.");
         } else {

@@ -26,6 +26,9 @@ public class OrderStoryEntity extends OrderAbstract {
     @ManyToOne
     private UserEntity userEntity;
 
+    @Column(name = "order_number")
+    private Long orderNumber;
+
     @Column(name = "comment")
     private String comment;
 

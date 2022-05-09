@@ -382,7 +382,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public String getQrUniqueName(Long orderId) {
-        return orderRepository.getQrName(orderId).orElse(null);
+        return qrCodeRepository.getQrName(orderId).orElse(null);
     }
 
     private String createQrToServer(String data) throws WriterException, IOException {

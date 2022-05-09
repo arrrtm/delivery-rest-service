@@ -36,7 +36,7 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
 
     @NonNull
     @Override
-    @Query("select oe from OrderEntity oe where oe.status <> 'RECEIVED_BY_CLIENT' and oe.status <> 'DESTROYED' and oe.deleted = false")
+    @Query("select oe from OrderEntity oe where (oe.status <> 'TAKEN_BY_COURIER' and oe.status <> 'DESTROYED') and oe.deleted = false")
     Page<OrderEntity> findAll(@NonNull Pageable pageable);
 
     @NonNull
@@ -44,6 +44,6 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
     @Query("select oe from OrderEntity oe where oe.deleted = false and oe.id = ?1")
     Optional<OrderEntity> findById(@NonNull Long orderId);
 
-    @Query("select qrte.path from QrCodeTemporaryEntity qrte where qrte.orderId = ?1")
-    Optional<String> getQrName(Long orderId);
+    @Query("select count(oe) from OrderEntity oe where (oe.status = 'SENT_TO_FILIAL' or oe.status = 'READY_FROM_DELIVERY' or oe.status = 'TAKEN_BY_COURIER' or oe.status = 'HANDED_OVER_TO_THE_COURIER') and oe.deleted = false and oe.branchEntity.id = ?1")
+    Long totalCountOfOrdersActive(Long branchId);
 }

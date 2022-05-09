@@ -4,6 +4,7 @@ import kg.banksystem.deliverybackend.dto.admin.request.BranchRequestDTO;
 import kg.banksystem.deliverybackend.entity.BranchEntity;
 
 import java.util.List;
+import java.util.Map;
 
 public interface BranchService {
 
@@ -20,4 +21,6 @@ public interface BranchService {
     int branchPageCalculation(int page);
 
     List<String> getBranchNames();
+
+    List<Map<String, Object>> getStatistics();
 }

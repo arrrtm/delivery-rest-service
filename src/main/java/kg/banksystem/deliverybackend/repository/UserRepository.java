@@ -27,4 +27,10 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     Page<UserEntity> findByRoleName(String role, Pageable pageable);
 
     UserEntity findByUsername(String name);
+
+    @Query("select count(ue) from UserEntity ue join ue.branchEntities be where ue.status = 'ACTIVE' and ue.roleEntity.name = 'COURIER' and ue.deleted = false and be.id = ?1")
+    Long totalCountOfCouriersActive(Long branchId);
+
+    @Query("select count(ue) from UserEntity ue join ue.branchEntities be where ue.roleEntity.name = 'COURIER' and (ue.status = 'BANNED' or ue.deleted = true) and be.id = ?1")
+    Long totalCountOfCouriersInactive(Long branchId);
 }

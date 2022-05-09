@@ -34,4 +34,16 @@ public interface OrderStoryRepository extends JpaRepository<OrderStoryEntity, Lo
     @Override
     @Query("select ose from OrderStoryEntity ose where ose.deleted = false and ose.id = ?1")
     Optional<OrderStoryEntity> findById(@NonNull Long orderId);
+
+    @Query("select count(ose) from OrderStoryEntity ose where ose.deleted = false and ose.branchEntity.id = ?1")
+    Long totalCountOfOrdersComplete(Long branchId);
+
+    @Query(value = "select count(ose) from stories ose where ose.is_deleted = false and (ose.updated >= current_date - 7) and ose.branch_entity_id = ?1", nativeQuery = true)
+    Long countOfCompletedOrdersPerWeek(Long branchId);
+
+    @Query(value = "select count(ose) from stories ose where ose.is_deleted = false and (ose.updated >= current_date - 30) and ose.branch_entity_id = ?1", nativeQuery = true)
+    Long countOfCompletedOrdersPerMonth(Long branchId);
+
+    @Query(value = "select count(ose) from stories ose where ose.is_deleted = false and (ose.updated >= current_date - 365) and ose.branch_entity_id = ?1", nativeQuery = true)
+    Long countOfCompletedOrdersPerYear(Long branchId);
 }

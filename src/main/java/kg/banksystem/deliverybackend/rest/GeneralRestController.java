@@ -1,5 +1,6 @@
 package kg.banksystem.deliverybackend.rest;
 
+import kg.banksystem.deliverybackend.dto.admin.response.BranchStatisticResponseDTO;
 import kg.banksystem.deliverybackend.dto.order.request.OrderRequestDTO;
 import kg.banksystem.deliverybackend.dto.order.response.OrderDetailResponseDTO;
 import kg.banksystem.deliverybackend.dto.order.response.OrderStoryDetailResponseDTO;
@@ -190,6 +191,23 @@ public class GeneralRestController {
             couriers.forEach(user -> userResponseDTOS.add(UserResponseDTO.userPersonalAccount(user)));
             log.info("Couriers data successfully found!");
             return new ResponseEntity<>(new BaseResponse("Курьеры успешно найдены!", userResponseDTOS, RestStatus.SUCCESS), HttpStatus.OK);
+        }
+    }
+
+    // DONE
+    @PostMapping("statistic")
+    public ResponseEntity<BaseResponse> getBranchStatistic(@RequestHeader(name = "Authorization") String token) {
+        Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
+        log.info("User with username: {} caused a response for get Branch Statistic.", tokenData.get("sub"));
+        List<Map<String, Object>> statisticsList = branchService.getStatistics();
+        if (statisticsList == null) {
+            log.error("Statistics data not found.");
+            return new ResponseEntity<>(new BaseResponse("Статистика по филиалам отсутствует.", null, RestStatus.ERROR), HttpStatus.OK);
+        } else {
+            List<BranchStatisticResponseDTO> statisticResponseDTOS = new ArrayList<>();
+            statisticsList.forEach(statistics -> statisticResponseDTOS.add(BranchStatisticResponseDTO.statisticsData(statistics)));
+            log.info("Statistics data successfully found!");
+            return new ResponseEntity<>(new BaseResponse("Статистика по филиалам успешно найдена!", statisticResponseDTOS, RestStatus.SUCCESS), HttpStatus.OK);
         }
     }
 }

@@ -172,4 +172,16 @@ public class BranchEmployeeRestController {
             return new ResponseEntity<>(new BaseResponse("Курьеры успешно найдены!", userResponseDTOS, RestStatus.SUCCESS), HttpStatus.OK);
         }
     }
+
+    // IN PROGRESS
+    @PostMapping("statistic")
+    public ResponseEntity<BaseResponse> getStatisticForBranch(@RequestHeader(name = "Authorization") String token) {
+        return null;
+    }
+
+    // IN PROGRESS
+    @GetMapping("statistics/couriers")
+    public ResponseEntity<BaseResponse> getStatisticForCouriers(@RequestHeader(name = "Authorization") String token) {
+        return null;
+    }
 }

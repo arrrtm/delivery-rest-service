@@ -105,7 +105,6 @@ public class OrderStoryServiceImpl implements OrderStoryService {
         return orderStoryEntities.getTotalPages();
     }
 
-    // ALMOST DONE
     @Override
     public List<OrderStoryEntity> getAllOrderStoryForBranch(Long userId, int page, Long orderNumber, Long courierId) {
         if (orderNumber != null) {
@@ -139,7 +138,6 @@ public class OrderStoryServiceImpl implements OrderStoryService {
         }
     }
 
-    // ALMOST DONE
     @Override
     public int orderStoryPageCalculation(Long userId, int page, Long courierId) {
         Long branchId = branchRepository.findBranchIdByUserId(userId);

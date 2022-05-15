@@ -52,10 +52,11 @@ public class OrderServiceImpl implements OrderService {
 
     @Value("${qr-code.path}")
     private String pathQR;
+
     @Value("${identification.path}")
     private String pathPhoto;
 
-    //  @Value("${identification.service.url}")
+    @Value("${identification.service.url}")
     private String urlIdentificationService;
 
     @Autowired
@@ -72,7 +73,7 @@ public class OrderServiceImpl implements OrderService {
     public List<OrderEntity> getAllActiveOrders(int page, Long orderNumber, String branchName) {
         if (orderNumber != null) {
             try {
-                return Stream.of(findOrderById(orderNumber)).filter(orderEntity -> !orderEntity.getStatus().equals(OrderStatus.RECEIVED_BY_CLIENT) && !orderEntity.getStatus().equals(OrderStatus.DESTROYED)).collect(Collectors.toList());
+                return Stream.of(findOrderById(orderNumber)).filter(orderEntity -> !orderEntity.getStatus().equals(OrderStatus.DESTROYED)).collect(Collectors.toList());
             } catch (NullPointerException npe) {
                 log.error("No active orders found.");
                 return null;

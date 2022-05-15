@@ -22,6 +22,9 @@ public interface OrderStoryRepository extends JpaRepository<OrderStoryEntity, Lo
     @Query("select ose from OrderStoryEntity ose where ose.deleted = false and ose.orderNumber = ?1")
     Page<OrderStoryEntity> findAllByBranch(Pageable pageable, Long orderId);
 
+    @Query(value = "select * from stories st where st.is_deleted = false and (st.updated >= current_date - ?3) and st.branch_entity_id = ?1 and st.order_number = ?2 ORDER BY ID DESC LIMIT 1", nativeQuery = true)
+    OrderStoryEntity findStoryByOrder(Long branchId, Long orderId, int period);
+
     @Query("select ose from OrderStoryEntity ose where ose.deleted = false and ose.userEntity.id = ?1")
     Page<OrderStoryEntity> findAllByCourier(Pageable pageable, Long courierId);
 
@@ -46,4 +49,16 @@ public interface OrderStoryRepository extends JpaRepository<OrderStoryEntity, Lo
 
     @Query(value = "select count(ose) from stories ose where ose.is_deleted = false and (ose.updated >= current_date - 365) and ose.branch_entity_id = ?1", nativeQuery = true)
     Long countOfCompletedOrdersPerYear(Long branchId);
+
+    @Query(value = "select count(ose) from stories ose where ose.is_deleted = false and (ose.updated >= current_date - 1) and ose.user_entity_id = ?1", nativeQuery = true)
+    Long countOfCompletedOrdersPerDayByCourierId(Long courierId);
+
+    @Query(value = "select count(ose) from stories ose where ose.is_deleted = false and (ose.updated >= current_date - 7) and ose.user_entity_id = ?1", nativeQuery = true)
+    Long countOfCompletedOrdersPerWeekByCourierId(Long courierId);
+
+    @Query(value = "select count(ose) from stories ose where ose.is_deleted = false and (ose.updated >= current_date - 30) and ose.user_entity_id = ?1", nativeQuery = true)
+    Long countOfCompletedOrdersPerMonthByCourierId(Long courierId);
+
+    @Query(value = "select st.updated from stories st where st.is_deleted = false and st.user_entity_id = ?1 ORDER BY ID DESC LIMIT 1", nativeQuery = true)
+    String lastOrderDateByCourierId(Long courierId);
 }

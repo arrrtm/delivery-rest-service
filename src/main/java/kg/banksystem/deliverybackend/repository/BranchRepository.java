@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.lang.NonNull;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface BranchRepository extends JpaRepository<BranchEntity, Long> {
@@ -23,4 +24,9 @@ public interface BranchRepository extends JpaRepository<BranchEntity, Long> {
     @Override
     @Query("select be from BranchEntity be where be.deleted = false and be.id = ?1")
     Optional<BranchEntity> findById(@NonNull Long branchId);
+
+    BranchEntity findBranchEntityByName(String branchName);
+
+    @Query("select be from BranchEntity be where be.deleted = false and be.id = ?1")
+    List<BranchEntity> findAllByBranchId(Long branchId);
 }

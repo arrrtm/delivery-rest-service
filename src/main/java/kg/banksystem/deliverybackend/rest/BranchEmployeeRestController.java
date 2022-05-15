@@ -1,10 +1,13 @@
 package kg.banksystem.deliverybackend.rest;
 
+import kg.banksystem.deliverybackend.dto.admin.response.BranchCourierResponseDTO;
+import kg.banksystem.deliverybackend.dto.admin.response.BranchStatisticResponseDTO;
 import kg.banksystem.deliverybackend.dto.order.request.OrderIdRequestDTO;
 import kg.banksystem.deliverybackend.dto.order.request.OrderStatusRequestDTO;
 import kg.banksystem.deliverybackend.dto.order.response.OrderDetailResponseDTO;
 import kg.banksystem.deliverybackend.dto.order.response.OrderStoryDetailResponseDTO;
 import kg.banksystem.deliverybackend.dto.user.response.UserResponseDTO;
+import kg.banksystem.deliverybackend.entity.BranchEntity;
 import kg.banksystem.deliverybackend.entity.OrderEntity;
 import kg.banksystem.deliverybackend.entity.OrderStoryEntity;
 import kg.banksystem.deliverybackend.entity.UserEntity;
@@ -12,6 +15,7 @@ import kg.banksystem.deliverybackend.entity.response.BaseResponse;
 import kg.banksystem.deliverybackend.entity.response.PaginationResponse;
 import kg.banksystem.deliverybackend.enums.RestStatus;
 import kg.banksystem.deliverybackend.security.jwt.JwtTokenDecoder;
+import kg.banksystem.deliverybackend.service.BranchService;
 import kg.banksystem.deliverybackend.service.OrderService;
 import kg.banksystem.deliverybackend.service.OrderStoryService;
 import lombok.extern.slf4j.Slf4j;
@@ -30,12 +34,14 @@ import java.util.Map;
 public class BranchEmployeeRestController {
 
     private final OrderService orderService;
+    private final BranchService branchService;
     private final OrderStoryService orderStoryService;
     private final JwtTokenDecoder jwtTokenDecoder;
 
     @Autowired
-    public BranchEmployeeRestController(OrderService orderService, OrderStoryService orderStoryService, JwtTokenDecoder jwtTokenDecoder) {
+    public BranchEmployeeRestController(OrderService orderService, BranchService branchService, OrderStoryService orderStoryService, JwtTokenDecoder jwtTokenDecoder) {
         this.orderService = orderService;
+        this.branchService = branchService;
         this.orderStoryService = orderStoryService;
         this.jwtTokenDecoder = jwtTokenDecoder;
     }
@@ -68,7 +74,7 @@ public class BranchEmployeeRestController {
         }
     }
 
-    // ALMOST DONE
+    // DONE
     @PostMapping("story")
     public ResponseEntity<PaginationResponse> getAllOrdersStoryForBranch(@RequestHeader(name = "Authorization") String token, int page, Long orderNumber, Long courierId) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -150,7 +156,7 @@ public class BranchEmployeeRestController {
                 log.error("Order QR code not found.");
                 return new ResponseEntity<>(new BaseResponse(("QR код для заказа с номером " + orderIdRequestDTO.getId() + " не найден!"), null, RestStatus.ERROR), HttpStatus.OK);
             } else {
-                log.info("Order QR successfully not found.");
+                log.info("Order QR successfully found.");
                 return new ResponseEntity<>(new BaseResponse(("QR код для заказа с номером " + orderIdRequestDTO.getId() + " успешно найден!"), qrName, RestStatus.SUCCESS), HttpStatus.OK);
             }
         }
@@ -173,15 +179,49 @@ public class BranchEmployeeRestController {
         }
     }
 
-    // IN PROGRESS
+    // DONE
     @PostMapping("statistic")
     public ResponseEntity<BaseResponse> getStatisticForBranch(@RequestHeader(name = "Authorization") String token) {
-        return null;
+        Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
+        log.info("User with username: {} caused a response for get Branch Statistic.", tokenData.get("sub"));
+        List<Map<String, Object>> statisticList = branchService.getStatisticByBranch(new Long(tokenData.get("user_id")));
+        if (statisticList == null) {
+            log.error("Statistic data for Branch not found.");
+            return new ResponseEntity<>(new BaseResponse("Статистика по филиалу отсутствует.", null, RestStatus.ERROR), HttpStatus.OK);
+        } else {
+            List<BranchStatisticResponseDTO> statisticResponseDTOS = new ArrayList<>();
+            statisticList.forEach(statistics -> statisticResponseDTOS.add(BranchStatisticResponseDTO.statisticsData(statistics)));
+            log.info("Statistic data for Branch successfully found!");
+            return new ResponseEntity<>(new BaseResponse("Статистика по филиалу успешно найдена!", statisticResponseDTOS, RestStatus.SUCCESS), HttpStatus.OK);
+        }
     }
 
-    // IN PROGRESS
-    @GetMapping("statistics/couriers")
+    // DONE
+    @PostMapping("statistics/couriers")
     public ResponseEntity<BaseResponse> getStatisticForCouriers(@RequestHeader(name = "Authorization") String token) {
-        return null;
+        Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
+        log.info("User with username: {} caused a response for get Courier Statistic.", tokenData.get("sub"));
+        List<Map<String, Object>> courierStatisticList = branchService.getCourierStatisticByBranch(new Long(tokenData.get("user_id")));
+        if (courierStatisticList == null) {
+            log.error("Courier statistic data for Branch not found.");
+            return new ResponseEntity<>(new BaseResponse("Статистика по курьерам филиала отсутствует.", null, RestStatus.ERROR), HttpStatus.OK);
+        } else {
+            List<BranchCourierResponseDTO> courierStatisticResponseDTOS = new ArrayList<>();
+            courierStatisticList.forEach(courier -> courierStatisticResponseDTOS.add(BranchCourierResponseDTO.courierData(courier)));
+            log.info("Courier statistic data for Branch successfully found!");
+            return new ResponseEntity<>(new BaseResponse("Статистика по курьерам филиала успешно найдена!", courierStatisticResponseDTOS, RestStatus.SUCCESS), HttpStatus.OK);
+        }
+    }
+
+    // DONE
+    @PostMapping("get/branch")
+    public ResponseEntity<BaseResponse> getBranchByToken(@RequestHeader(name = "Authorization") String token) {
+        Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
+        BranchEntity branch = branchService.getBranchByUserId(new Long(tokenData.get("user_id")));
+        if (branch.getName() == null) {
+            return new ResponseEntity<>(new BaseResponse("Филиал пользователя не найден.", null, RestStatus.ERROR), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(new BaseResponse("Филиал пользователя успешно найден.", branch.getName(), RestStatus.SUCCESS), HttpStatus.OK);
+        }
     }
 }

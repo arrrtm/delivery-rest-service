@@ -34,6 +34,9 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
     @Query("select oe from OrderEntity oe where oe.status <> 'RECEIVED_BY_CLIENT' and oe.status <> 'DESTROYED' and oe.deleted = false and oe.branchEntity.name = ?1")
     Page<OrderEntity> findAllByBranch(Pageable pageable, String branchName);
 
+    @Query(value = "select * from orders oe where oe.is_deleted = false and oe.updated >= (current_date - ?2) and oe.branch_entity_id = ?1", nativeQuery = true)
+    List<OrderEntity> findAllByBranch(Long branchId, int period);
+
     @NonNull
     @Override
     @Query("select oe from OrderEntity oe where (oe.status <> 'TAKEN_BY_COURIER' and oe.status <> 'DESTROYED') and oe.deleted = false")

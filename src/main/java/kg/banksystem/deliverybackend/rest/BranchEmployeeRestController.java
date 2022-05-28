@@ -46,9 +46,8 @@ public class BranchEmployeeRestController {
         this.jwtTokenDecoder = jwtTokenDecoder;
     }
 
-    // DONE
     @PostMapping("orders")
-    public ResponseEntity<PaginationResponse> getAllOrdersForBranch(@RequestHeader(name = "Authorization") String token, @RequestBody OrderStatusRequestDTO orderStatusRequestDTO, int page) {
+    public ResponseEntity<PaginationResponse> getAllOrdersForBranch(@RequestHeader(name = "Authorization") String token, @RequestBody OrderStatusRequestDTO orderStatusRequestDTO, int page, Long order) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
         log.info("User with username: {} caused a response get all Orders for Branch.", tokenData.get("sub"));
         log.info("Request status: {}.", orderStatusRequestDTO.getRequestStatus());
@@ -56,50 +55,46 @@ public class BranchEmployeeRestController {
             log.error("Incorrect request status!");
             return new ResponseEntity<>(new PaginationResponse("Неверный статус запроса!", null, RestStatus.ERROR, 0), HttpStatus.OK);
         }
-        if (!orderStatusRequestDTO.getRequestStatus().equals("new") &&
-                !orderStatusRequestDTO.getRequestStatus().equals("active") &&
-                !orderStatusRequestDTO.getRequestStatus().equals("destroyed")) {
+        if (!orderStatusRequestDTO.getRequestStatus().equals("new") && !orderStatusRequestDTO.getRequestStatus().equals("active") && !orderStatusRequestDTO.getRequestStatus().equals("destroyed")) {
             log.error("Incorrect request status!");
             return new ResponseEntity<>(new PaginationResponse("Неверный статус запроса!", null, RestStatus.ERROR, 0), HttpStatus.OK);
         }
-        List<OrderEntity> orderEntityEntities = orderService.getOrdersForBranch(new Long(tokenData.get("user_id")), orderStatusRequestDTO.getRequestStatus(), page);
+        List<OrderEntity> orderEntityEntities = orderService.getOrdersForBranch(new Long(tokenData.get("user_id")), orderStatusRequestDTO.getRequestStatus(), page, order);
         if (orderEntityEntities == null) {
             log.error("Orders data for Branch not found.");
             return new ResponseEntity<>(new PaginationResponse("Заказы для филиала не найдены.", null, RestStatus.ERROR, 0), HttpStatus.OK);
         } else {
             List<OrderDetailResponseDTO> ordersResponseDTOS = new ArrayList<>();
-            orderEntityEntities.forEach(order -> ordersResponseDTOS.add(OrderDetailResponseDTO.ordersForDetail(order)));
+            orderEntityEntities.forEach(orders -> ordersResponseDTOS.add(OrderDetailResponseDTO.ordersForDetail(orders)));
             log.info("Orders all data for Branch successfully found.");
             return new ResponseEntity<>(new PaginationResponse("Заказы для филиала успешно найдены.", ordersResponseDTOS, RestStatus.SUCCESS, orderService.orderPageCalculation(new Long(tokenData.get("user_id")), orderStatusRequestDTO.getRequestStatus(), page)), HttpStatus.OK);
         }
     }
 
-    // DONE
     @PostMapping("story")
-    public ResponseEntity<PaginationResponse> getAllOrdersStoryForBranch(@RequestHeader(name = "Authorization") String token, int page, Long orderNumber, Long courierId) {
+    public ResponseEntity<PaginationResponse> getAllOrdersStoryForBranch(@RequestHeader(name = "Authorization") String token, int page, Long order, Long courier) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
         log.info("User with username: {} caused a response get all Orders Story for Branch.", tokenData.get("sub"));
-        List<OrderStoryEntity> orderStoryEntities = orderStoryService.getAllOrderStoryForBranch(new Long(tokenData.get("user_id")), page, orderNumber, courierId);
+        List<OrderStoryEntity> orderStoryEntities = orderStoryService.getAllOrderStoryForBranch(new Long(tokenData.get("user_id")), page, order, courier);
         if (orderStoryEntities == null) {
             log.error("Story data for Branch not found.");
-            return new ResponseEntity<>(new PaginationResponse(("История заказа но номеру: " + orderNumber + " не найдена."), null, RestStatus.ERROR, orderStoryService.orderStoryPageCalculation(new Long(tokenData.get("user_id")), page, courierId)), HttpStatus.OK);
+            return new ResponseEntity<>(new PaginationResponse(("История заказа но номеру: " + order + " не найдена."), null, RestStatus.ERROR, orderStoryService.orderStoryPageCalculation(page, new Long(tokenData.get("user_id")), courier)), HttpStatus.OK);
         }
         if (orderStoryEntities.isEmpty()) {
             log.error("Story data not found.");
-            return new ResponseEntity<>(new PaginationResponse("Историй заказов для филиала не найдено.", null, RestStatus.ERROR, orderStoryService.orderStoryPageCalculation(new Long(tokenData.get("user_id")), page, courierId)), HttpStatus.OK);
+            return new ResponseEntity<>(new PaginationResponse("Историй заказов для филиала не найдено.", null, RestStatus.ERROR, orderStoryService.orderStoryPageCalculation(page, new Long(tokenData.get("user_id")), courier)), HttpStatus.OK);
         } else {
             try {
                 List<OrderStoryDetailResponseDTO> ordersResponseDTOS = new ArrayList<>();
-                orderStoryEntities.forEach(order -> ordersResponseDTOS.add(OrderStoryDetailResponseDTO.ordersStoryForDetail(order)));
+                orderStoryEntities.forEach(orders -> ordersResponseDTOS.add(OrderStoryDetailResponseDTO.ordersStoryForDetail(orders)));
                 log.info("Story all data for Branch successfully found.");
-                return new ResponseEntity<>(new PaginationResponse("Истории заказов для филиала успешно найдены.", ordersResponseDTOS, RestStatus.SUCCESS, orderStoryService.orderStoryPageCalculation(new Long(tokenData.get("user_id")), page, courierId)), HttpStatus.OK);
+                return new ResponseEntity<>(new PaginationResponse("Истории заказов для филиала успешно найдены.", ordersResponseDTOS, RestStatus.SUCCESS, orderStoryService.orderStoryPageCalculation(page, new Long(tokenData.get("user_id")), courier)), HttpStatus.OK);
             } catch (NullPointerException npe) {
-                return new ResponseEntity<>(new PaginationResponse(("История заказа но номеру: " + orderNumber + " не найдена."), null, RestStatus.ERROR, orderStoryService.orderStoryPageCalculation(new Long(tokenData.get("user_id")), page, courierId)), HttpStatus.OK);
+                return new ResponseEntity<>(new PaginationResponse(("История заказа но номеру: " + order + " не найдена."), null, RestStatus.ERROR, orderStoryService.orderStoryPageCalculation(page, new Long(tokenData.get("user_id")), courier)), HttpStatus.OK);
             }
         }
     }
 
-    // DONE
     @PostMapping("orders/change/ready-from-delivery")
     public ResponseEntity<BaseResponse> changeReadyFromDelivery(@RequestHeader(name = "Authorization") String token, @RequestBody OrderIdRequestDTO orderIdRequestDTO) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -120,7 +115,6 @@ public class BranchEmployeeRestController {
         }
     }
 
-    // DONE
     @PostMapping("orders/change/destroyed")
     public ResponseEntity<BaseResponse> changeDestroyed(@RequestHeader(name = "Authorization") String token, @RequestBody OrderIdRequestDTO orderIdRequestDTO) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -141,7 +135,6 @@ public class BranchEmployeeRestController {
         }
     }
 
-    // DONE
     @PostMapping("orders/qr")
     public ResponseEntity<BaseResponse> getQrForOrder(@RequestHeader(name = "Authorization") String token, @RequestBody OrderIdRequestDTO orderIdRequestDTO) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -162,7 +155,6 @@ public class BranchEmployeeRestController {
         }
     }
 
-    // DONE
     @PostMapping("couriers")
     public ResponseEntity<BaseResponse> getCouriers(@RequestHeader(name = "Authorization") String token) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -179,7 +171,6 @@ public class BranchEmployeeRestController {
         }
     }
 
-    // DONE
     @PostMapping("statistic")
     public ResponseEntity<BaseResponse> getStatisticForBranch(@RequestHeader(name = "Authorization") String token) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -196,7 +187,6 @@ public class BranchEmployeeRestController {
         }
     }
 
-    // DONE
     @PostMapping("statistics/couriers")
     public ResponseEntity<BaseResponse> getStatisticForCouriers(@RequestHeader(name = "Authorization") String token) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -213,7 +203,6 @@ public class BranchEmployeeRestController {
         }
     }
 
-    // DONE
     @PostMapping("get/branch")
     public ResponseEntity<BaseResponse> getBranchByToken(@RequestHeader(name = "Authorization") String token) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));

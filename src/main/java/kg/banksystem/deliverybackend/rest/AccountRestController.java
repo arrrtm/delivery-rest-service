@@ -34,7 +34,6 @@ public class AccountRestController {
         this.jwtTokenDecoder = jwtTokenDecoder;
     }
 
-    // DONE
     @PostMapping("view")
     public ResponseEntity<BaseResponse> getPersonalAccount(@RequestHeader(name = "Authorization") String token) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -52,7 +51,6 @@ public class AccountRestController {
         }
     }
 
-    // DONE
     @PostMapping("edit")
     public ResponseEntity<BaseResponse> editPersonalAccount(@RequestHeader(name = "Authorization") String token, @RequestBody EditAccountRequestDTO editAccountRequestDTO) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -62,8 +60,7 @@ public class AccountRestController {
             log.error("Error request status.");
             return new ResponseEntity<>(new BaseResponse("Неверный статус запроса!", null, RestStatus.ERROR), HttpStatus.OK);
         }
-        if (!editAccountRequestDTO.getStatus().equals("personal_data") &&
-                !editAccountRequestDTO.getStatus().equals("personal_password")) {
+        if (!editAccountRequestDTO.getStatus().equals("personal_data") && !editAccountRequestDTO.getStatus().equals("personal_password")) {
             log.error("Error request status.");
             return new ResponseEntity<>(new BaseResponse("Неверный статус запроса!", null, RestStatus.ERROR), HttpStatus.OK);
         }
@@ -92,7 +89,6 @@ public class AccountRestController {
         }
     }
 
-    // DONE
     @PostMapping("password/reset")
     public ResponseEntity<BaseResponse> resetPersonalPassword(@RequestBody ResetPasswordRequestDTO resetPasswordRequestDTO) {
         log.info("Username for reset password: {}.", resetPasswordRequestDTO.getUsername());

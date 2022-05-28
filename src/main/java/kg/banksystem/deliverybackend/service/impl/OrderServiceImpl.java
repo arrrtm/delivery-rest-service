@@ -6,9 +6,11 @@ import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import kg.banksystem.deliverybackend.dto.order.request.IdentificationRequestDTO;
+import kg.banksystem.deliverybackend.dto.order.request.OrderOperationsRequestDTO;
 import kg.banksystem.deliverybackend.dto.order.response.identification.IdentificationResponseMessageDTO;
 import kg.banksystem.deliverybackend.entity.*;
 import kg.banksystem.deliverybackend.enums.DeliveryCompleteStatus;
+import kg.banksystem.deliverybackend.enums.DeliveryType;
 import kg.banksystem.deliverybackend.enums.OrderStatus;
 import kg.banksystem.deliverybackend.repository.*;
 import kg.banksystem.deliverybackend.service.OrderService;
@@ -47,6 +49,7 @@ public class OrderServiceImpl implements OrderService {
     private final UserRepository userRepository;
     private final OrderStoryRepository orderStoryRepository;
     private final BranchRepository branchRepository;
+    private final CardRepository cardRepository;
     private final ClientRepository clientRepository;
     private final QrCodeRepository qrCodeRepository;
 
@@ -60,17 +63,18 @@ public class OrderServiceImpl implements OrderService {
     private String urlIdentificationService;
 
     @Autowired
-    public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository, OrderStoryRepository orderStoryRepository, BranchRepository branchRepository, ClientRepository clientRepository, QrCodeRepository qrCodeRepository) {
+    public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository, OrderStoryRepository orderStoryRepository, BranchRepository branchRepository, CardRepository cardRepository, ClientRepository clientRepository, QrCodeRepository qrCodeRepository) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.orderStoryRepository = orderStoryRepository;
         this.branchRepository = branchRepository;
+        this.cardRepository = cardRepository;
         this.clientRepository = clientRepository;
         this.qrCodeRepository = qrCodeRepository;
     }
 
     @Override
-    public List<OrderEntity> getAllActiveOrders(int page, Long orderNumber, String branchName) {
+    public List<OrderEntity> getAllActiveOrders(int page, Long orderNumber, Long branchId) {
         if (orderNumber != null) {
             try {
                 return Stream.of(findOrderById(orderNumber)).filter(orderEntity -> !orderEntity.getStatus().equals(OrderStatus.DESTROYED)).collect(Collectors.toList());
@@ -78,9 +82,9 @@ public class OrderServiceImpl implements OrderService {
                 log.error("No active orders found.");
                 return null;
             }
-        } else if (branchName != null) {
+        } else if (branchId != null) {
             try {
-                return orderRepository.findAllByBranch(PageRequest.of(page, 5, Sort.by("updatedDate").descending()), branchName).getContent();
+                return orderRepository.findAllByBranch(PageRequest.of(page, 5, Sort.by("updatedDate").descending()), branchId).getContent();
             } catch (NullPointerException npe) {
                 log.error("No active orders found.");
                 return null;
@@ -98,37 +102,16 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderEntity findOrderById(Long orderId) {
-        OrderEntity orderEntity = orderRepository.findById(orderId).orElse(null);
-        if (orderEntity == null) {
-            log.error("No order found by orderId: {}.", orderId);
-            return null;
-        } else {
-            log.info("Order: {} successfully found by orderId: {}.", orderEntity, orderId);
-            return orderEntity;
+    public List<OrderEntity> getOrdersForBranch(Long userId, String status, int page, Long orderNumber) {
+        Long branchId = branchRepository.findBranchIdByUserId(userId);
+        if (orderNumber != null) {
+            try {
+                return Stream.of(findOrderById(orderNumber)).filter(orderEntity -> orderEntity.getBranchEntity().getId().equals(branchId)).collect(Collectors.toList());
+            } catch (NullPointerException npe) {
+                log.error("No orders found by orderNumber {}", orderNumber);
+                return null;
+            }
         }
-    }
-
-    // IN PROGRESS
-    @Override
-    public boolean addOrder(OrderEntity orderEntity, BranchEntity branchEntity) {
-        return true;
-    }
-
-    // IN PROGRESS
-    @Override
-    public boolean editOrder(OrderEntity orderEntity, BranchEntity branchEntity) {
-        return true;
-    }
-
-    // IN PROGRESS
-    @Override
-    public boolean deleteOrder(Long orderId) {
-        return true;
-    }
-
-    @Override
-    public List<OrderEntity> getOrdersForBranch(Long userId, String status, int page) {
         Page<OrderEntity> ordersForBranches;
         switch (status) {
             case "new":
@@ -150,6 +133,121 @@ public class OrderServiceImpl implements OrderService {
         } else {
             log.info("Orders for Branch successfully found by User with userId: {}.", userId);
             return ordersForBranches.getContent();
+        }
+    }
+
+    @Override
+    public OrderEntity findOrderById(Long orderId) {
+        OrderEntity orderEntity = orderRepository.findById(orderId).orElse(null);
+        if (orderEntity == null) {
+            log.error("No order found by orderId: {}.", orderId);
+            return null;
+        } else {
+            log.info("Order: {} successfully found by orderId: {}.", orderEntity, orderId);
+            return orderEntity;
+        }
+    }
+
+    @Override
+    public boolean addOrder(OrderOperationsRequestDTO orderOperationsRequestDTO) {
+        BranchEntity branch = branchRepository.findById(orderOperationsRequestDTO.getBranch()).orElse(null);
+        if (branch == null) {
+            log.error("Branch with Id: {} not found.", orderOperationsRequestDTO.getBranch());
+            return false;
+        }
+        CardEntity card = cardRepository.findById(orderOperationsRequestDTO.getCard()).orElse(null);
+        if (card == null) {
+            log.error("Card with Id: {} not found.", orderOperationsRequestDTO.getCard());
+            return false;
+        }
+        ClientEntity client = clientRepository.findById(orderOperationsRequestDTO.getClient()).orElse(null);
+        if (client == null) {
+            log.error("Client with Id: {} not found.", orderOperationsRequestDTO.getClient());
+            return false;
+        }
+        try {
+            OrderEntity order = new OrderEntity();
+            order.setCreatedDate(LocalDateTime.now());
+            order.setUpdatedDate(LocalDateTime.now());
+            order.setDeleted(false);
+            order.setAddressDelivery(orderOperationsRequestDTO.getAddressDelivery());
+            order.setAddressPickup(orderOperationsRequestDTO.getAddressPickup());
+            order.setStatus(OrderStatus.NEW_ORDER);
+            order.setTypeDelivery(DeliveryType.COURIER_DELIVERY);
+            order.setBranchEntity(branch);
+            order.setCardEntity(card);
+            order.setClientEntity(client);
+            orderRepository.save(order);
+            log.info("Order: {} successfully added.", orderOperationsRequestDTO.getId());
+            return true;
+        } catch (Exception ex) {
+            log.error("Order: {} was not added.", orderOperationsRequestDTO.getId());
+            System.out.println(ex.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean editOrder(OrderOperationsRequestDTO orderOperationsRequestDTO) {
+        OrderEntity order = findOrderById(orderOperationsRequestDTO.getId());
+        if (order == null) {
+            log.error("Order with orderId: {} was not found.", orderOperationsRequestDTO.getId());
+            return false;
+        } else {
+            try {
+                BranchEntity branch = branchRepository.findById(orderOperationsRequestDTO.getBranch()).orElse(null);
+                if (branch == null) {
+                    log.error("Branch with Id: {} not found.", orderOperationsRequestDTO.getBranch());
+                    return false;
+                }
+                CardEntity card = cardRepository.findById(orderOperationsRequestDTO.getCard()).orElse(null);
+                if (card == null) {
+                    log.error("Card with Id: {} not found.", orderOperationsRequestDTO.getCard());
+                    return false;
+                }
+                ClientEntity client = clientRepository.findById(orderOperationsRequestDTO.getClient()).orElse(null);
+                if (client == null) {
+                    log.error("Client with Id: {} not found.", orderOperationsRequestDTO.getClient());
+                    return false;
+                }
+                order.setUpdatedDate(LocalDateTime.now());
+                order.setAddressDelivery(orderOperationsRequestDTO.getAddressDelivery());
+                order.setAddressPickup(orderOperationsRequestDTO.getAddressPickup());
+                order.setStatus(OrderStatus.IN_PROCESS);
+                order.setTypeDelivery(DeliveryType.COURIER_DELIVERY);
+                order.setBranchEntity(branch);
+                order.setCardEntity(card);
+                order.setClientEntity(client);
+                orderRepository.save(order);
+                log.info("Order with orderId: {} successfully updated", orderOperationsRequestDTO.getId());
+                return true;
+            } catch (Exception ex) {
+                log.error("Order with orderId: {} was not updated.", orderOperationsRequestDTO.getId());
+                System.out.println(ex.getMessage());
+                return false;
+            }
+        }
+    }
+
+    @Override
+    public boolean deleteOrder(OrderOperationsRequestDTO orderOperationsRequestDTO) {
+        OrderEntity order = findOrderById(orderOperationsRequestDTO.getId());
+        if (order == null) {
+            log.error("Order with orderId: {} was not found.", orderOperationsRequestDTO.getId());
+            return false;
+        } else {
+            try {
+                order.setUpdatedDate(LocalDateTime.now());
+                order.setDeletedDate(LocalDateTime.now());
+                order.setDeleted(true);
+                orderRepository.save(order);
+                log.info("Order with orderId: {} successfully removed. It can be viewed in the database.", orderOperationsRequestDTO.getId());
+                return true;
+            } catch (Exception ex) {
+                log.error("Order with orderId: {} was not removed.", orderOperationsRequestDTO.getId());
+                System.out.println(ex.getMessage());
+                return false;
+            }
         }
     }
 
@@ -244,7 +342,7 @@ public class OrderServiceImpl implements OrderService {
         String fullPath = pathPhoto + fileName + " - " + LocalDateTime.now().toString().replace(":", "-") + ".jpg";
         ImageIO.write(bImageFromConvert, "jpg", new File(fullPath));
 
-        ClientEntity clientEntity = clientRepository.findClientEntityById(clientId);
+        ClientEntity clientEntity = clientRepository.findById(clientId).orElse(null);
         identification.setPin(clientEntity.getClientPin().replaceAll(" ", ""));
         identification.setExternal_id(clientEntity.getId());
         identification.setMsisdn(clientEntity.getClientPhoneNumber().replaceAll("[ +()]", ""));
@@ -301,6 +399,8 @@ public class OrderServiceImpl implements OrderService {
                     orderEntity.setStatus(OrderStatus.RECEIVED_BY_CLIENT);
                     orderStoryEntity.setStatus(DeliveryCompleteStatus.SUCCESSFUL_DELIVERY);
                     break;
+                default:
+                    return false;
             }
             orderEntity.getUserEntities().remove(userRepository.getById(userId));
             orderRepository.save(orderEntity);
@@ -376,14 +476,19 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public int orderWithBranchPageCalculation(int page, String branchName) {
-        Page<OrderEntity> orders = orderRepository.findAllByBranch(PageRequest.of(page, 5, Sort.by("updatedDate").descending()), branchName);
+    public int orderWithBranchPageCalculation(int page, Long branchId) {
+        Page<OrderEntity> orders = orderRepository.findAllByBranch(PageRequest.of(page, 5, Sort.by("updatedDate").descending()), branchId);
         return orders.getTotalPages();
     }
 
     @Override
     public String getQrUniqueName(Long orderId) {
         return qrCodeRepository.getQrName(orderId).orElse(null);
+    }
+
+    @Override
+    public List<CardEntity> getCards() {
+        return cardRepository.findAll().stream().filter(order -> !order.isDeleted()).collect(Collectors.toList());
     }
 
     private String createQrToServer(String data) throws WriterException, IOException {

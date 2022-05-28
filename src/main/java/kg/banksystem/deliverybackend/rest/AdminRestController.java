@@ -38,7 +38,6 @@ public class AdminRestController {
         this.jwtTokenDecoder = jwtTokenDecoder;
     }
 
-    // DONE
     @PostMapping("users")
     public ResponseEntity<PaginationResponse> getAllUsers(@RequestHeader(name = "Authorization") String token, int page) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -55,42 +54,24 @@ public class AdminRestController {
         }
     }
 
-    // DONE
-    @PostMapping("users/detail")
-    public ResponseEntity<BaseResponse> getUserById(@RequestHeader(name = "Authorization") String token, @RequestBody UserRequestDTO userRequestDTO) {
+    @PostMapping("users/remove")
+    public ResponseEntity<BaseResponse> userRemove(@RequestHeader(name = "Authorization") String token, @RequestBody UserRequestDTO userRequestDTO) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
-        log.info("User with username: {} caused a response get User by Id.", tokenData.get("sub"));
-        log.info("Request User Id: {}.", userRequestDTO.getId());
-        UserEntity userEntity = userService.findUserById(userRequestDTO.getId());
-        if (userEntity == null) {
-            log.error("User data for User with Id: {} not found.", userRequestDTO.getId());
-            return new ResponseEntity<>(new BaseResponse("Пользователь не найден.", null, RestStatus.ERROR), HttpStatus.OK);
+        log.info("User with username: {} caused a response delete User.", tokenData.get("sub"));
+        log.info("Request User Id for deleting: {}.", userRequestDTO.getId());
+        if (userRequestDTO.getId() == null) {
+            log.error("Request User Id can not be empty!");
+            return new ResponseEntity<>(new BaseResponse("Идентификатор пользователя не может быть пустым!", null, RestStatus.ERROR), HttpStatus.OK);
+        }
+        if (userService.removeUser(userRequestDTO)) {
+            log.info("User deleted successfully!");
+            return new ResponseEntity<>(new BaseResponse("Пользователь был успешно удалён!", null, RestStatus.SUCCESS), HttpStatus.OK);
         } else {
-            UserResponseDTO userResponseDTO = UserResponseDTO.userPersonalAccount(userEntity);
-            log.info("User data for User with Id: {} successfully found.", userRequestDTO.getId());
-            return new ResponseEntity<>(new BaseResponse("Пользователь успешно найден.", userResponseDTO, RestStatus.SUCCESS), HttpStatus.OK);
+            log.error("User has not been deleted.");
+            return new ResponseEntity<>(new BaseResponse("Пользователь не был удалён. Проверьте данные и повторите попытку ещё раз!", null, RestStatus.ERROR), HttpStatus.OK);
         }
     }
 
-    // IN PROGRESS
-    @PostMapping("users/register")
-    public ResponseEntity<BaseResponse> userRegister(@RequestHeader(name = "Authorization") String token, @RequestBody UserRequestDTO userRequestDTO) {
-        return new ResponseEntity<>(new BaseResponse(null, null, null), HttpStatus.OK);
-    }
-
-    // IN PROGRESS
-    @PostMapping("users/update")
-    public ResponseEntity<BaseResponse> userUpdate(@RequestHeader(name = "Authorization") String token, @RequestBody UserRequestDTO userRequestDTO) {
-        return new ResponseEntity<>(new BaseResponse(null, null, null), HttpStatus.OK);
-    }
-
-    // IN PROGRESS
-    @PostMapping("users/remove")
-    public ResponseEntity<BaseResponse> userRemove(@RequestHeader(name = "Authorization") String token, @RequestBody UserRequestDTO userRequestDTO) {
-        return new ResponseEntity<>(new BaseResponse(null, null, null), HttpStatus.OK);
-    }
-
-    // DONE
     @PostMapping("branches")
     public ResponseEntity<PaginationResponse> getAllBranches(@RequestHeader(name = "Authorization") String token, int page) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -107,7 +88,6 @@ public class AdminRestController {
         }
     }
 
-    // DONE
     @PostMapping("branches/detail")
     public ResponseEntity<BaseResponse> getBranchById(@RequestHeader(name = "Authorization") String token, @RequestBody BranchRequestDTO branchRequestDTO) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -124,7 +104,6 @@ public class AdminRestController {
         }
     }
 
-    // DONE
     @PostMapping("branches/add")
     public ResponseEntity<BaseResponse> branchAdd(@RequestHeader(name = "Authorization") String token, @RequestBody BranchRequestDTO branchRequestDTO) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -138,7 +117,6 @@ public class AdminRestController {
         }
     }
 
-    // DONE
     @PostMapping("branches/edit")
     public ResponseEntity<BaseResponse> branchEdit(@RequestHeader(name = "Authorization") String token, @RequestBody BranchRequestDTO branchRequestDTO) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -157,7 +135,6 @@ public class AdminRestController {
         }
     }
 
-    // DONE
     @PostMapping("branches/delete")
     public ResponseEntity<BaseResponse> branchDelete(@RequestHeader(name = "Authorization") String token, @RequestBody BranchRequestDTO branchRequestDTO) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));

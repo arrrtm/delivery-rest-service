@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -87,7 +88,7 @@ public class ClientServiceImpl implements ClientService {
     public boolean deleteClient(ClientRequestDTO clientRequestDTO) {
         ClientEntity clientEntity = getClientById(clientRequestDTO.getId());
         if (clientEntity == null) {
-            log.error("Client with branchId: {} was not found.", clientRequestDTO.getId());
+            log.error("Client with clientId: {} was not found.", clientRequestDTO.getId());
             return false;
         } else {
             try {
@@ -95,10 +96,10 @@ public class ClientServiceImpl implements ClientService {
                 clientEntity.setDeletedDate(LocalDateTime.now());
                 clientEntity.setDeleted(true);
                 clientRepository.save(clientEntity);
-                log.info("Client with branchId: {} was successfully deleted. It can be viewed in the database.", clientRequestDTO.getId());
+                log.info("Client with clientId: {} was successfully deleted. It can be viewed in the database.", clientRequestDTO.getId());
                 return true;
             } catch (Exception ex) {
-                log.error("Client with branchId: {} was not deleted.", clientRequestDTO.getId());
+                log.error("Client with clientId: {} was not deleted.", clientRequestDTO.getId());
                 System.out.println(ex.getMessage());
                 return false;
             }
@@ -109,5 +110,10 @@ public class ClientServiceImpl implements ClientService {
     public int clientPageCalculation(int page) {
         Page<ClientEntity> clientEntities = clientRepository.findAll(PageRequest.of(page, 5, Sort.by("updatedDate").descending()));
         return clientEntities.getTotalPages();
+    }
+
+    @Override
+    public List<ClientEntity> getClients() {
+        return clientRepository.findAll().stream().filter(client -> !client.isDeleted()).collect(Collectors.toList());
     }
 }

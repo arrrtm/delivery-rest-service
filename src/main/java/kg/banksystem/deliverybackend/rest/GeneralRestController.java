@@ -1,15 +1,13 @@
 package kg.banksystem.deliverybackend.rest;
 
 import kg.banksystem.deliverybackend.dto.admin.response.BranchReportResponseDTO;
+import kg.banksystem.deliverybackend.dto.admin.response.BranchResponseDTO;
 import kg.banksystem.deliverybackend.dto.order.request.OrderRequestDTO;
 import kg.banksystem.deliverybackend.dto.order.response.OrderDetailResponseDTO;
 import kg.banksystem.deliverybackend.dto.order.response.OrderStoryDetailResponseDTO;
 import kg.banksystem.deliverybackend.dto.user.response.RoleResponseDTO;
 import kg.banksystem.deliverybackend.dto.user.response.UserResponseDTO;
-import kg.banksystem.deliverybackend.entity.OrderEntity;
-import kg.banksystem.deliverybackend.entity.OrderStoryEntity;
-import kg.banksystem.deliverybackend.entity.RoleEntity;
-import kg.banksystem.deliverybackend.entity.UserEntity;
+import kg.banksystem.deliverybackend.entity.*;
 import kg.banksystem.deliverybackend.entity.response.BaseResponse;
 import kg.banksystem.deliverybackend.enums.RestStatus;
 import kg.banksystem.deliverybackend.security.jwt.JwtTokenDecoder;
@@ -47,7 +45,6 @@ public class GeneralRestController {
         this.branchService = branchService;
     }
 
-    // DONE
     @PostMapping("get/role")
     public ResponseEntity<BaseResponse> getRoleByToken(@RequestHeader(name = "Authorization") String token) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -61,7 +58,6 @@ public class GeneralRestController {
         }
     }
 
-    // DONE
     @PostMapping("get/name")
     public ResponseEntity<BaseResponse> getNameByToken(@RequestHeader(name = "Authorization") String token) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -73,7 +69,6 @@ public class GeneralRestController {
         }
     }
 
-    // DONE
     @PostMapping("orders/detail")
     public ResponseEntity<BaseResponse> getOrderById(@RequestHeader(name = "Authorization") String token, @RequestBody OrderRequestDTO orderRequestDTO) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -111,22 +106,38 @@ public class GeneralRestController {
         }
     }
 
-    // DONE
     @PostMapping("branches")
-    public ResponseEntity<BaseResponse> getBranchNames(@RequestHeader(name = "Authorization") String token) {
+    public ResponseEntity<BaseResponse> getBranches(@RequestHeader(name = "Authorization") String token) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
-        log.info("User with username: {} caused a response for get Branch Names.", tokenData.get("sub"));
-        List<String> branchNames = branchService.getBranchNames();
-        if (branchNames.isEmpty()) {
+        log.info("User with username: {} caused a response for get all Branches.", tokenData.get("sub"));
+        List<BranchEntity> branchEntities = branchService.getBranches();
+        if (branchEntities.isEmpty()) {
             log.error("Branches data not found.");
             return new ResponseEntity<>(new BaseResponse("Филиалы не найдены.", null, RestStatus.ERROR), HttpStatus.OK);
         } else {
+            List<BranchResponseDTO> branchResponseDTOS = new ArrayList<>();
+            branchEntities.forEach(branch -> branchResponseDTOS.add(BranchResponseDTO.branchData(branch)));
             log.info("Branches data successfully found!");
-            return new ResponseEntity<>(new BaseResponse("Наименования филиалов успешно найдены!", branchNames, RestStatus.SUCCESS), HttpStatus.OK);
+            return new ResponseEntity<>(new BaseResponse("Филиалы успешно найдены!", branchResponseDTOS, RestStatus.SUCCESS), HttpStatus.OK);
         }
     }
 
-    // DONE
+    @PostMapping("roles")
+    public ResponseEntity<BaseResponse> getRoles(@RequestHeader(name = "Authorization") String token) {
+        Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
+        log.info("User with username: {} caused a response for get all Roles.", tokenData.get("sub"));
+        List<RoleEntity> roleEntities = userService.getRoles();
+        if (roleEntities.isEmpty()) {
+            log.error("Roles data not found.");
+            return new ResponseEntity<>(new BaseResponse("Роли не найдены.", null, RestStatus.ERROR), HttpStatus.OK);
+        } else {
+            List<RoleResponseDTO> roleResponseDTOS = new ArrayList<>();
+            roleEntities.forEach(role -> roleResponseDTOS.add(RoleResponseDTO.roleData(role)));
+            log.info("Roles data successfully found!");
+            return new ResponseEntity<>(new BaseResponse("Роли успешно найдены!", roleResponseDTOS, RestStatus.SUCCESS), HttpStatus.OK);
+        }
+    }
+
     @PostMapping("couriers")
     public ResponseEntity<BaseResponse> getCouriers(@RequestHeader(name = "Authorization") String token) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -143,22 +154,21 @@ public class GeneralRestController {
         }
     }
 
-    // DONE
     @PostMapping("report")
-    public ResponseEntity<BaseResponse> getBranchReport(@RequestHeader(name = "Authorization") String token, String branchName, String period) {
+    public ResponseEntity<BaseResponse> getBranchReport(@RequestHeader(name = "Authorization") String token, String branch, String period) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
         log.info("User with username: {} caused a response for get Branch Report.", tokenData.get("sub"));
-        log.info("Branch for report: {}.", branchName);
+        log.info("Branch for report: {}.", branch);
         log.info("Period for report: {}.", period);
-        List<Map<String, Object>> reportList = branchService.getReport(branchName, period);
+        List<Map<String, Object>> reportList = branchService.getReport(branch, period);
         if (reportList == null) {
-            log.error("Report generation by Branch {} error.", branchName);
-            return new ResponseEntity<>(new BaseResponse(("Ошибка формирования отчёта по филиалу " + branchName + "."), null, RestStatus.ERROR), HttpStatus.OK);
+            log.error("Report generation by Branch {} error.", branch);
+            return new ResponseEntity<>(new BaseResponse(("Ошибка формирования отчёта по филиалу " + branch + "."), null, RestStatus.ERROR), HttpStatus.OK);
         } else {
             List<BranchReportResponseDTO> reportResponseDTOS = new ArrayList<>();
             reportList.forEach(report -> reportResponseDTOS.add(BranchReportResponseDTO.reportData(report)));
             log.info("Report successfully generation and upload!");
-            return new ResponseEntity<>(new BaseResponse(("Отчёт по филиалу " + branchName + " успешно загружен!"), reportResponseDTOS, RestStatus.SUCCESS), HttpStatus.OK);
+            return new ResponseEntity<>(new BaseResponse(("Отчёт по филиалу " + branch + " успешно загружен!"), reportResponseDTOS, RestStatus.SUCCESS), HttpStatus.OK);
         }
     }
 }

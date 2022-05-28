@@ -9,12 +9,14 @@ import java.util.Set;
 
 @Data
 public class CardResponseDTO {
+    private Long id;
     private String typeCard;
     private String description;
     private Set<CurrencyResponseDTO> currency;
 
     public static CardResponseDTO cardData(CardEntity cardEntity) {
         CardResponseDTO cardResponseDTO = new CardResponseDTO();
+        cardResponseDTO.setId(cardEntity.getId());
         cardResponseDTO.setTypeCard(cardEntity.getTypeCard());
         cardResponseDTO.setDescription(cardEntity.getDescription());
         Set<CurrencyResponseDTO> currency = new HashSet<>();

@@ -1,10 +1,12 @@
 package kg.banksystem.deliverybackend.service.impl;
 
 import kg.banksystem.deliverybackend.dto.user.request.ResetPasswordRequestDTO;
+import kg.banksystem.deliverybackend.dto.user.request.UserRequestDTO;
 import kg.banksystem.deliverybackend.entity.BranchEntity;
 import kg.banksystem.deliverybackend.entity.RoleEntity;
 import kg.banksystem.deliverybackend.entity.UserEntity;
 import kg.banksystem.deliverybackend.enums.UserStatus;
+import kg.banksystem.deliverybackend.repository.BranchRepository;
 import kg.banksystem.deliverybackend.repository.RoleRepository;
 import kg.banksystem.deliverybackend.repository.UserRepository;
 import kg.banksystem.deliverybackend.service.AccountService;
@@ -18,7 +20,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,14 +32,16 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final BranchRepository branchRepository;
     private final PasswordEncoder passwordEncoder;
     private final AccountService accountService;
 
     @Autowired
     public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository,
-                           PasswordEncoder passwordEncoder, AccountService accountService) {
+                           BranchRepository branchRepository, PasswordEncoder passwordEncoder, AccountService accountService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.branchRepository = branchRepository;
         this.passwordEncoder = passwordEncoder;
         this.accountService = accountService;
     }
@@ -72,40 +78,98 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    // IN PROGRESS
     @Override
-    public boolean registerUser(UserEntity userEntity, RoleEntity roleEntity, BranchEntity branchEntity) {
-        RoleEntity roleEntityUser = roleRepository.findByName("ADMIN");
-        List<RoleEntity> userRoleEntities = new ArrayList<>();
-        userRoleEntities.add(roleEntityUser);
-        userEntity.setPassword(passwordEncoder.encode(userEntity.getPassword()));
-        userEntity.setRoleEntity(userRoleEntities.get(1));
-        userEntity.setStatus(UserStatus.ACTIVE);
-        UserEntity registerUser = userRepository.save(userEntity);
-        log.info("User: {} successfully registered.", registerUser);
-        return true;
+    public boolean registerUser(UserRequestDTO userRequestDTO) {
+        RoleEntity role = roleRepository.findById(userRequestDTO.getRole()).orElse(null);
+        if (role == null) {
+            log.error("Role with Id: {} not found.", userRequestDTO.getRole());
+            return false;
+        }
+        Collection<BranchEntity> branch = branchRepository.findAllByBranchId(userRequestDTO.getBranches());
+        if (branch.isEmpty()) {
+            log.error("Branch with Id: {} not found.", userRequestDTO.getBranches());
+            return false;
+        }
+        try {
+            UserEntity user = new UserEntity();
+            user.setCreatedDate(LocalDateTime.now());
+            user.setUpdatedDate(LocalDateTime.now());
+            user.setDeleted(false);
+            user.setAttempt(0);
+            user.setUsername(userRequestDTO.getUsername());
+            user.setPassword(passwordEncoder.encode(userRequestDTO.getPassword()));
+            user.setUserFullName(userRequestDTO.getUserFullName());
+            user.setUserPhoneNumber(userRequestDTO.getUserPhoneNumber());
+            user.setEmail(userRequestDTO.getEmail());
+            user.setStatus(UserStatus.ACTIVE);
+            user.setRoleEntity(role);
+            user.setBranchEntities(branch);
+            userRepository.save(user);
+            log.info("User: {} successfully registered.", userRequestDTO.getUserFullName());
+            return true;
+        } catch (Exception ex) {
+            log.error("User: {} was not registered.", userRequestDTO.getUserFullName());
+            System.out.println(ex.getMessage());
+            return false;
+        }
     }
 
-    // IN PROGRESS
     @Override
-    public boolean updateUser(UserEntity userEntity, RoleEntity roleEntity, BranchEntity branchEntity) {
-        RoleEntity roleEntityUser = roleRepository.findByName("ADMIN");
-        List<RoleEntity> userRoleEntities = new ArrayList<>();
-        userRoleEntities.add(roleEntityUser);
-        userEntity.setPassword(passwordEncoder.encode(userEntity.getPassword()));
-        userEntity.setRoleEntity(userRoleEntities.get(1));
-        userEntity.setStatus(UserStatus.ACTIVE);
-        UserEntity updatedUser = userRepository.save(userEntity);
-        log.info("User: {} successfully updated.", updatedUser);
-        return true;
+    public boolean updateUser(UserRequestDTO userRequestDTO) {
+        UserEntity user = findUserById(userRequestDTO.getId());
+        if (user == null) {
+            log.error("User with userId: {} was not found.", userRequestDTO.getId());
+            return false;
+        } else {
+            try {
+                RoleEntity role = roleRepository.findById(userRequestDTO.getRole()).orElse(null);
+                if (role == null) {
+                    log.error("Role with Id: {} not found.", userRequestDTO.getRole());
+                    return false;
+                }
+                Collection<BranchEntity> branch = branchRepository.findAllByBranchId(userRequestDTO.getBranches());
+                if (branch.isEmpty()) {
+                    log.error("Branch with Id: {} not found.", userRequestDTO.getBranches());
+                    return false;
+                }
+                user.setUpdatedDate(LocalDateTime.now());
+                user.setUsername(userRequestDTO.getUsername());
+                user.setUserFullName(userRequestDTO.getUserFullName());
+                user.setUserPhoneNumber(userRequestDTO.getUserPhoneNumber());
+                user.setEmail(userRequestDTO.getEmail());
+                user.setRoleEntity(role);
+                user.setBranchEntities(branch);
+                userRepository.save(user);
+                log.info("User with userId: {} successfully updated", userRequestDTO.getId());
+                return true;
+            } catch (Exception ex) {
+                log.error("User with userId: {} was not updated.", userRequestDTO.getId());
+                System.out.println(ex.getMessage());
+                return false;
+            }
+        }
     }
 
-    // IN PROGRESS
     @Override
-    public boolean removeUser(Long userId) {
-        userRepository.deleteById(userId);
-        log.info("User with userId: {} successfully removed.", userId);
-        return true;
+    public boolean removeUser(UserRequestDTO userRequestDTO) {
+        UserEntity user = findUserById(userRequestDTO.getId());
+        if (user == null) {
+            log.error("User with userId: {} was not found.", userRequestDTO.getId());
+            return false;
+        } else {
+            try {
+                user.setUpdatedDate(LocalDateTime.now());
+                user.setDeletedDate(LocalDateTime.now());
+                user.setDeleted(true);
+                userRepository.save(user);
+                log.info("User with userId: {} successfully removed. It can be viewed in the database.", userRequestDTO.getId());
+                return true;
+            } catch (Exception ex) {
+                log.error("User with userId: {} was not removed.", userRequestDTO.getId());
+                System.out.println(ex.getMessage());
+                return false;
+            }
+        }
     }
 
     @Override
@@ -215,5 +279,10 @@ public class UserServiceImpl implements UserService {
                 .stream().filter(user -> !user.isDeleted())
                 .filter(user -> user.getRoleEntity().getName().equals("COURIER"))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<RoleEntity> getRoles() {
+        return new ArrayList<>(roleRepository.findAll());
     }
 }

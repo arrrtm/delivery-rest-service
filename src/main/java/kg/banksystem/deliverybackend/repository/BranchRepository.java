@@ -25,8 +25,8 @@ public interface BranchRepository extends JpaRepository<BranchEntity, Long> {
     @Query("select be from BranchEntity be where be.deleted = false and be.id = ?1")
     Optional<BranchEntity> findById(@NonNull Long branchId);
 
-    BranchEntity findBranchEntityByName(String branchName);
-
     @Query("select be from BranchEntity be where be.deleted = false and be.id = ?1")
     List<BranchEntity> findAllByBranchId(Long branchId);
+
+    BranchEntity findBranchEntityByName(String branchName);
 }

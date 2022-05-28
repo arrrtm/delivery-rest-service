@@ -37,7 +37,6 @@ public class AuthenticationRestController {
         this.userService = userService;
     }
 
-    // DONE
     @PostMapping("login")
     public ResponseEntity<BaseResponse> login(@RequestBody AuthenticationRequestDTO authenticationDTO) {
         String username = authenticationDTO.getUsername();

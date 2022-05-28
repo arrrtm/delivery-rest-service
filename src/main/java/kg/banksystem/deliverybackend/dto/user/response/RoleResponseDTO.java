@@ -5,10 +5,12 @@ import lombok.Data;
 
 @Data
 public class RoleResponseDTO {
+    private Long id;
     private String name;
 
     public static RoleResponseDTO roleData(RoleEntity roleEntity) {
         RoleResponseDTO roleResponseDTO = new RoleResponseDTO();
+        roleResponseDTO.setId(roleEntity.getId());
         switch (roleEntity.getName()) {
             case "ADMIN":
                 roleResponseDTO.setName("Администратор");

@@ -1,6 +1,6 @@
 package kg.banksystem.deliverybackend.service;
 
-import kg.banksystem.deliverybackend.entity.BranchEntity;
+import kg.banksystem.deliverybackend.dto.user.request.UserRequestDTO;
 import kg.banksystem.deliverybackend.entity.RoleEntity;
 import kg.banksystem.deliverybackend.entity.UserEntity;
 
@@ -20,14 +20,11 @@ public interface UserService {
 
     boolean unblockUser(Long userId);
 
-    // IN PROGRESS
-    boolean registerUser(UserEntity userEntity, RoleEntity roleEntity, BranchEntity branchEntity);
+    boolean registerUser(UserRequestDTO userRequestDTO);
 
-    // IN PROGRESS
-    boolean updateUser(UserEntity userEntity, RoleEntity roleEntity, BranchEntity branchEntity);
+    boolean updateUser(UserRequestDTO userRequestDTO);
 
-    // IN PROGRESS
-    boolean removeUser(Long userId);
+    boolean removeUser(UserRequestDTO userRequestDTO);
 
     String authCheck(String username);
 
@@ -38,4 +35,6 @@ public interface UserService {
     UserEntity findByUsername(String username);
 
     List<UserEntity> getCouriers();
+
+    List<RoleEntity> getRoles();
 }

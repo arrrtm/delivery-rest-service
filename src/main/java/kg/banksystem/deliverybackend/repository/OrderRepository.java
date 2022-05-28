@@ -31,8 +31,8 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
     @Query(value = "SELECT * FROM orders INNER JOIN users_branch_entities ON users_branch_entities.branch_entities_id = orders.branch_entity_id WHERE orders.status = 'DESTROYED' AND users_branch_entities.user_entity_id = ?1 ORDER BY updated DESC", nativeQuery = true)
     Page<OrderEntity> getDestroyedOrdersForBranchByUserId(Pageable pageable, Long userId);
 
-    @Query("select oe from OrderEntity oe where oe.status <> 'RECEIVED_BY_CLIENT' and oe.status <> 'DESTROYED' and oe.deleted = false and oe.branchEntity.name = ?1")
-    Page<OrderEntity> findAllByBranch(Pageable pageable, String branchName);
+    @Query("select oe from OrderEntity oe where oe.status <> 'RECEIVED_BY_CLIENT' and oe.status <> 'DESTROYED' and oe.deleted = false and oe.branchEntity.id = ?1")
+    Page<OrderEntity> findAllByBranch(Pageable pageable, Long branchId);
 
     @Query(value = "select * from orders oe where oe.is_deleted = false and oe.updated >= (current_date - ?2) and oe.branch_entity_id = ?1", nativeQuery = true)
     List<OrderEntity> findAllByBranch(Long branchId, int period);

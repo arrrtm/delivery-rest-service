@@ -4,7 +4,7 @@ import kg.banksystem.deliverybackend.dto.bank.request.ClientRequestDTO;
 import kg.banksystem.deliverybackend.dto.bank.request.UsersWithRoleRequestDTO;
 import kg.banksystem.deliverybackend.dto.bank.response.ClientResponseDTO;
 import kg.banksystem.deliverybackend.dto.order.request.OrderIdRequestDTO;
-import kg.banksystem.deliverybackend.dto.order.request.OrderRequestDTO;
+import kg.banksystem.deliverybackend.dto.order.request.OrderOperationsRequestDTO;
 import kg.banksystem.deliverybackend.dto.user.response.UserResponseDTO;
 import kg.banksystem.deliverybackend.entity.ClientEntity;
 import kg.banksystem.deliverybackend.entity.UserEntity;
@@ -43,7 +43,6 @@ public class BankEmployeeRestController {
         this.jwtTokenDecoder = jwtTokenDecoder;
     }
 
-    // DONE
     @PostMapping("users")
     public ResponseEntity<PaginationResponse> getAllUsers(@RequestHeader(name = "Authorization") String token, @RequestBody UsersWithRoleRequestDTO users, int page) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -65,7 +64,6 @@ public class BankEmployeeRestController {
         }
     }
 
-    // DONE
     @PostMapping("clients")
     public ResponseEntity<PaginationResponse> getAllClients(@RequestHeader(name = "Authorization") String token, int page) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -82,7 +80,6 @@ public class BankEmployeeRestController {
         }
     }
 
-    // DONE
     @PostMapping("clients/detail")
     public ResponseEntity<BaseResponse> getClientById(@RequestHeader(name = "Authorization") String token, @RequestBody ClientRequestDTO clientRequestDTO) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -99,7 +96,6 @@ public class BankEmployeeRestController {
         }
     }
 
-    // DONE
     @PostMapping("clients/add")
     public ResponseEntity<BaseResponse> clientAdd(@RequestHeader(name = "Authorization") String token, @RequestBody ClientRequestDTO clientRequestDTO) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -113,7 +109,6 @@ public class BankEmployeeRestController {
         }
     }
 
-    // DONE
     @PostMapping("clients/edit")
     public ResponseEntity<BaseResponse> clientEdit(@RequestHeader(name = "Authorization") String token, @RequestBody ClientRequestDTO clientRequestDTO) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -132,7 +127,6 @@ public class BankEmployeeRestController {
         }
     }
 
-    // DONE
     @PostMapping("clients/delete")
     public ResponseEntity<BaseResponse> clientDelete(@RequestHeader(name = "Authorization") String token, @RequestBody ClientRequestDTO clientRequestDTO) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -151,33 +145,55 @@ public class BankEmployeeRestController {
         }
     }
 
-    // IN PROGRESS
     @PostMapping("orders/add")
-    public ResponseEntity<BaseResponse> orderAdd(@RequestHeader(name = "Authorization") String token, @RequestBody OrderRequestDTO orderRequestDTO) {
+    public ResponseEntity<BaseResponse> orderAdd(@RequestHeader(name = "Authorization") String token, @RequestBody OrderOperationsRequestDTO orderOperationsRequestDTO) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
         log.info("User with username: {} caused a response add Order.", tokenData.get("sub"));
-        return new ResponseEntity<>(new BaseResponse(null, null, RestStatus.SUCCESS), HttpStatus.OK);
+        if (orderService.addOrder(orderOperationsRequestDTO)) {
+            log.info("Order added successfully!");
+            return new ResponseEntity<>(new BaseResponse(("Новый заказ был успешно добавлен!"), null, RestStatus.SUCCESS), HttpStatus.OK);
+        } else {
+            log.error("Order has not been added.");
+            return new ResponseEntity<>(new BaseResponse("Новый заказ не был добавлен, возможно он уже существует. Проверьте данные и повторите попытку ещё раз!", null, RestStatus.ERROR), HttpStatus.OK);
+        }
     }
 
-    // IN PROGRESS
     @PostMapping("orders/edit")
-    public ResponseEntity<BaseResponse> orderEdit(@RequestHeader(name = "Authorization") String token, @RequestBody OrderRequestDTO orderRequestDTO) {
+    public ResponseEntity<BaseResponse> orderEdit(@RequestHeader(name = "Authorization") String token, @RequestBody OrderOperationsRequestDTO orderOperationsRequestDTO) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
         log.info("User with username: {} caused a response edit Order.", tokenData.get("sub"));
-        log.info("Request Order Id for editing: {}.", orderRequestDTO.getId());
-        return new ResponseEntity<>(new BaseResponse(null, null, RestStatus.SUCCESS), HttpStatus.OK);
+        log.info("Request Order Id for editing: {}.", orderOperationsRequestDTO.getId());
+        if (orderOperationsRequestDTO.getId() == null) {
+            log.error("Request Order Id can not be empty!");
+            return new ResponseEntity<>(new BaseResponse("Номер заказа не может быть пустым!", null, RestStatus.ERROR), HttpStatus.OK);
+        }
+        if (orderService.editOrder(orderOperationsRequestDTO)) {
+            log.info("Order updated successfully!");
+            return new ResponseEntity<>(new BaseResponse(("Заказ с номером " + orderOperationsRequestDTO.getId() + " был успешно обновлён!"), null, RestStatus.SUCCESS), HttpStatus.OK);
+        } else {
+            log.error("Order has not been updated.");
+            return new ResponseEntity<>(new BaseResponse("Заказ не был обновлён, возможно он уже существует. Проверьте данные и повторите попытку ещё раз!", null, RestStatus.ERROR), HttpStatus.OK);
+        }
     }
 
-    // IN PROGRESS
     @PostMapping("orders/delete")
-    public ResponseEntity<BaseResponse> orderDelete(@RequestHeader(name = "Authorization") String token, @RequestBody OrderRequestDTO orderRequestDTO) {
+    public ResponseEntity<BaseResponse> orderDelete(@RequestHeader(name = "Authorization") String token, @RequestBody OrderOperationsRequestDTO orderOperationsRequestDTO) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
         log.info("User with username: {} caused a response delete Order.", tokenData.get("sub"));
-        log.info("Request Order Id for deleting: {}.", orderRequestDTO.getId());
-        return new ResponseEntity<>(new BaseResponse(null, null, RestStatus.SUCCESS), HttpStatus.OK);
+        log.info("Request Order Id for deleting: {}.", orderOperationsRequestDTO.getId());
+        if (orderOperationsRequestDTO.getId() == null) {
+            log.error("Request Order Id can not be empty!");
+            return new ResponseEntity<>(new BaseResponse("Номер заказа не может быть пустым!", null, RestStatus.ERROR), HttpStatus.OK);
+        }
+        if (orderService.deleteOrder(orderOperationsRequestDTO)) {
+            log.info("Order deleted successfully!");
+            return new ResponseEntity<>(new BaseResponse("Заказ был успешно удалён!", null, RestStatus.SUCCESS), HttpStatus.OK);
+        } else {
+            log.error("Order has not been deleted.");
+            return new ResponseEntity<>(new BaseResponse("Заказ не был удалён. Проверьте данные и повторите попытку ещё раз!", null, RestStatus.ERROR), HttpStatus.OK);
+        }
     }
 
-    // DONE
     @PostMapping("orders/change/sent-to-branch")
     public ResponseEntity<BaseResponse> changeSentToBranch(@RequestHeader(name = "Authorization") String token, @RequestBody OrderIdRequestDTO orderIdRequestDTO) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));

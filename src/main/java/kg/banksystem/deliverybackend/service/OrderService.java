@@ -1,7 +1,8 @@
 package kg.banksystem.deliverybackend.service;
 
 import com.google.zxing.WriterException;
-import kg.banksystem.deliverybackend.entity.BranchEntity;
+import kg.banksystem.deliverybackend.dto.order.request.OrderOperationsRequestDTO;
+import kg.banksystem.deliverybackend.entity.CardEntity;
 import kg.banksystem.deliverybackend.entity.OrderEntity;
 
 import java.io.IOException;
@@ -9,20 +10,17 @@ import java.util.List;
 
 public interface OrderService {
 
+    List<OrderEntity> getAllActiveOrders(int page, Long orderNumber, Long branchId);
+
+    List<OrderEntity> getOrdersForBranch(Long userId, String status, int page, Long orderNumber);
+
     OrderEntity findOrderById(Long orderId);
 
-    // IN PROGRESS
-    boolean addOrder(OrderEntity orderEntity, BranchEntity branchEntity);
+    boolean addOrder(OrderOperationsRequestDTO orderOperationsRequestDTO);
 
-    // IN PROGRESS
-    boolean editOrder(OrderEntity orderEntity, BranchEntity branchEntity);
+    boolean editOrder(OrderOperationsRequestDTO orderOperationsRequestDTO);
 
-    // IN PROGRESS
-    boolean deleteOrder(Long orderId);
-
-    List<OrderEntity> getAllActiveOrders(int page, Long orderNumber, String branchName);
-
-    List<OrderEntity> getOrdersForBranch(Long userId, String status, int page);
+    boolean deleteOrder(OrderOperationsRequestDTO orderOperationsRequestDTO);
 
     List<OrderEntity> getAllNewOrdersByUserId(Long userId);
 
@@ -44,7 +42,9 @@ public interface OrderService {
 
     int orderPageCalculation(Long userId, String status, int page);
 
-    int orderWithBranchPageCalculation(int page, String branchName);
+    int orderWithBranchPageCalculation(int page, Long branchId);
 
     String getQrUniqueName(Long orderId);
+
+    List<CardEntity> getCards();
 }

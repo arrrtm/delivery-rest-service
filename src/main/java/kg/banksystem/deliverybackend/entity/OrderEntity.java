@@ -3,10 +3,7 @@ package kg.banksystem.deliverybackend.entity;
 import kg.banksystem.deliverybackend.entity.base.OrderAbstract;
 import kg.banksystem.deliverybackend.enums.DeliveryType;
 import kg.banksystem.deliverybackend.enums.OrderStatus;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 import org.hibernate.Hibernate;
 
 import javax.persistence.*;
@@ -16,7 +13,8 @@ import java.util.Objects;
 @Getter
 @Setter
 @ToString
-@RequiredArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "orders")
 public class OrderEntity extends OrderAbstract {

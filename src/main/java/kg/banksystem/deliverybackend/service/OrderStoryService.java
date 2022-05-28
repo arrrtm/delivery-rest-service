@@ -7,17 +7,15 @@ import java.util.List;
 
 public interface OrderStoryService {
 
-    List<OrderStoryEntity> getAllOrderStory(int page, Long orderNumber, String branchName, Long courierId);
+    List<OrderStoryEntity> getAllOrderStory(int page, Long orderNumber, Long branchId, Long courierId);
 
     List<OrderStoryEntity> getOrderStoryByCourierId(Long userId);
 
     OrderStoryEntity findOrderStoryById(Long orderId);
 
-    int orderStoryPageCalculation(int page, String branchName, Long courierId);
-
     List<OrderStoryEntity> getAllOrderStoryForBranch(Long userId, int page, Long orderNumber, Long courierId);
 
-    int orderStoryPageCalculation(Long userId, int page, Long courierId);
+    int orderStoryPageCalculation(int page, Long userId, Long courierId);
 
     List<UserEntity> getCouriersByBranch(Long userId);
 }

@@ -16,8 +16,8 @@ public interface OrderStoryRepository extends JpaRepository<OrderStoryEntity, Lo
     @Query("select ose from OrderStoryEntity ose join ose.userEntity ue where ue in (:user) and ose.deleted = false")
     List<OrderStoryEntity> getStoryOrdersByUser(@Param("user") UserEntity user);
 
-    @Query("select ose from OrderStoryEntity ose where ose.deleted = false and ose.branchEntity.name = ?1")
-    Page<OrderStoryEntity> findAllByBranch(Pageable pageable, String branchName);
+    @Query("select ose from OrderStoryEntity ose where ose.deleted = false and ose.branchEntity.id = ?1")
+    Page<OrderStoryEntity> findAllByBranchId(Pageable pageable, Long branchId);
 
     @Query("select ose from OrderStoryEntity ose where ose.deleted = false and ose.orderNumber = ?1")
     Page<OrderStoryEntity> findAllByBranch(Pageable pageable, Long orderId);
@@ -27,16 +27,6 @@ public interface OrderStoryRepository extends JpaRepository<OrderStoryEntity, Lo
 
     @Query("select ose from OrderStoryEntity ose where ose.deleted = false and ose.userEntity.id = ?1")
     Page<OrderStoryEntity> findAllByCourier(Pageable pageable, Long courierId);
-
-    @NonNull
-    @Override
-    @Query("select ose from OrderStoryEntity ose where ose.deleted = false")
-    Page<OrderStoryEntity> findAll(@NonNull Pageable pageable);
-
-    @NonNull
-    @Override
-    @Query("select ose from OrderStoryEntity ose where ose.deleted = false and ose.id = ?1")
-    Optional<OrderStoryEntity> findById(@NonNull Long orderId);
 
     @Query("select count(ose) from OrderStoryEntity ose where ose.deleted = false and ose.branchEntity.id = ?1")
     Long totalCountOfOrdersComplete(Long branchId);
@@ -61,4 +51,14 @@ public interface OrderStoryRepository extends JpaRepository<OrderStoryEntity, Lo
 
     @Query(value = "select st.updated from stories st where st.is_deleted = false and st.user_entity_id = ?1 ORDER BY ID DESC LIMIT 1", nativeQuery = true)
     String lastOrderDateByCourierId(Long courierId);
+
+    @NonNull
+    @Override
+    @Query("select ose from OrderStoryEntity ose where ose.deleted = false")
+    Page<OrderStoryEntity> findAll(@NonNull Pageable pageable);
+
+    @NonNull
+    @Override
+    @Query("select ose from OrderStoryEntity ose where ose.deleted = false and ose.id = ?1")
+    Optional<OrderStoryEntity> findById(@NonNull Long orderId);
 }

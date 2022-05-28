@@ -10,7 +10,6 @@ import kg.banksystem.deliverybackend.service.OrderStoryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -34,7 +33,7 @@ public class OrderStoryServiceImpl implements OrderStoryService {
     }
 
     @Override
-    public List<OrderStoryEntity> getAllOrderStory(int page, Long orderNumber, String branchName, Long courierId) {
+    public List<OrderStoryEntity> getAllOrderStory(int page, Long orderNumber, Long branchId, Long courierId) {
         if (orderNumber != null) {
             try {
                 return orderStoryRepository.findAllByBranch(PageRequest.of(page, 5, Sort.by("updatedDate").descending()), orderNumber).getContent();
@@ -42,9 +41,9 @@ public class OrderStoryServiceImpl implements OrderStoryService {
                 log.error("No orders story found.");
                 return null;
             }
-        } else if (branchName != null) {
+        } else if (branchId != null) {
             try {
-                return orderStoryRepository.findAllByBranch(PageRequest.of(page, 5, Sort.by("updatedDate").descending()), branchName).getContent();
+                return orderStoryRepository.findAllByBranchId(PageRequest.of(page, 5, Sort.by("updatedDate").descending()), branchId).getContent();
             } catch (NullPointerException npe) {
                 log.error("No orders story found.");
                 return null;
@@ -93,19 +92,6 @@ public class OrderStoryServiceImpl implements OrderStoryService {
     }
 
     @Override
-    public int orderStoryPageCalculation(int page, String branchName, Long courierId) {
-        Page<OrderStoryEntity> orderStoryEntities;
-        if (branchName != null) {
-            orderStoryEntities = orderStoryRepository.findAllByBranch(PageRequest.of(page, 5, Sort.by("updatedDate").descending()), branchName);
-        } else if (courierId != null) {
-            orderStoryEntities = orderStoryRepository.findAllByCourier(PageRequest.of(page, 5, Sort.by("updatedDate").descending()), courierId);
-        } else {
-            orderStoryEntities = orderStoryRepository.findAll(PageRequest.of(page, 5, Sort.by("updatedDate").descending()));
-        }
-        return orderStoryEntities.getTotalPages();
-    }
-
-    @Override
     public List<OrderStoryEntity> getAllOrderStoryForBranch(Long userId, int page, Long orderNumber, Long courierId) {
         if (orderNumber != null) {
             try {
@@ -139,19 +125,17 @@ public class OrderStoryServiceImpl implements OrderStoryService {
     }
 
     @Override
-    public int orderStoryPageCalculation(Long userId, int page, Long courierId) {
+    public int orderStoryPageCalculation(int page, Long userId, Long courierId) {
         Long branchId = branchRepository.findBranchIdByUserId(userId);
-        List<OrderStoryEntity> orderStoryEntities;
-        if (courierId != null) {
-            orderStoryEntities = orderStoryRepository.findAllByCourier(PageRequest.of(page, 5, Sort.by("updatedDate").descending()), courierId).stream()
-                    .filter(orderStory -> orderStory.getUserEntity().getId().equals(courierId))
-                    .collect(Collectors.toList());
+        Page<OrderStoryEntity> orderStoryEntities;
+        if (branchId != null) {
+            orderStoryEntities = orderStoryRepository.findAllByBranchId(PageRequest.of(page, 5, Sort.by("updatedDate").descending()), branchId);
+        } else if (courierId != null) {
+            orderStoryEntities = orderStoryRepository.findAllByCourier(PageRequest.of(page, 5, Sort.by("updatedDate").descending()), courierId);
         } else {
-            orderStoryEntities = orderStoryRepository.findAll(PageRequest.of(page, 5, Sort.by("updatedDate").descending())).stream()
-                    .filter(orderStory -> orderStory.getBranchEntity().getId().equals(branchId))
-                    .collect(Collectors.toList());
+            orderStoryEntities = orderStoryRepository.findAll(PageRequest.of(page, 5, Sort.by("updatedDate").descending()));
         }
-        return new PageImpl<>(orderStoryEntities).getTotalPages();
+        return orderStoryEntities.getTotalPages();
     }
 
     @Override

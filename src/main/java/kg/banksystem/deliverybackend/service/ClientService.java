@@ -18,4 +18,6 @@ public interface ClientService {
     boolean deleteClient(ClientRequestDTO clientRequestDTO);
 
     int clientPageCalculation(int page);
+
+    List<ClientEntity> getClients();
 }

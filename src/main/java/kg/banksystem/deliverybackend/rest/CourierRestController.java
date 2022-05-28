@@ -40,7 +40,6 @@ public class CourierRestController {
         this.jwtTokenDecoder = jwtTokenDecoder;
     }
 
-    // DONE
     @PostMapping("orders")
     public ResponseEntity<BaseResponse> getAllOrdersBrief(@RequestHeader(name = "Authorization") String token, @RequestBody OrderRequestDTO orderRequestDTO) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -73,7 +72,6 @@ public class CourierRestController {
         }
     }
 
-    // DONE
     @PostMapping("orders/story")
     public ResponseEntity<BaseResponse> storyOrder(@RequestHeader(name = "Authorization") String token) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -89,7 +87,6 @@ public class CourierRestController {
         return new ResponseEntity<>(new BaseResponse("История заказов успешно найдена.", orderStoryBriefResponseDTOS, RestStatus.SUCCESS), HttpStatus.OK);
     }
 
-    // DONE
     @PostMapping("orders/accept")
     public ResponseEntity<BaseResponse> acceptOrder(@RequestHeader(name = "Authorization") String token, @RequestBody OrderRequestDTO orderRequestDTO) throws IOException, WriterException {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -105,7 +102,6 @@ public class CourierRestController {
         }
     }
 
-    // DONE
     @PostMapping("orders/checkQR")
     public ResponseEntity<BaseResponse> checkQrCode(@RequestHeader(name = "Authorization") String token, @RequestBody ParseQrRequestDTO parseQrRequestDTO) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -127,7 +123,6 @@ public class CourierRestController {
         }
     }
 
-    // DONE
     @PostMapping("orders/identification")
     public ResponseEntity<BaseResponse> identification(@RequestHeader(name = "Authorization") String token, @RequestParam("photo") MultipartFile photo, @RequestParam("client_id") Long clientId) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -144,7 +139,6 @@ public class CourierRestController {
         }
     }
 
-    // DONE
     @PostMapping("orders/complete")
     public ResponseEntity<BaseResponse> completeOrder(@RequestHeader(name = "Authorization") String token, @RequestBody OrderRequestDTO orderRequestDTO) {
         Map<String, String> tokenData = jwtTokenDecoder.parseToken(token.substring(7));
@@ -156,9 +150,7 @@ public class CourierRestController {
             log.error("Incorrect request status!");
             return new ResponseEntity<>(new BaseResponse("Неверный статус запроса!", null, RestStatus.ERROR), HttpStatus.OK);
         }
-        if (!orderRequestDTO.getRequestStatus().equals("identification_client_error") &&
-                !orderRequestDTO.getRequestStatus().equals("unable_to_find_client") &&
-                !orderRequestDTO.getRequestStatus().equals("successful_delivery")) {
+        if (!orderRequestDTO.getRequestStatus().equals("identification_client_error") && !orderRequestDTO.getRequestStatus().equals("unable_to_find_client") && !orderRequestDTO.getRequestStatus().equals("successful_delivery")) {
             log.error("Incorrect request status!");
             return new ResponseEntity<>(new BaseResponse("Неверный статус запроса!", null, RestStatus.ERROR), HttpStatus.OK);
         }

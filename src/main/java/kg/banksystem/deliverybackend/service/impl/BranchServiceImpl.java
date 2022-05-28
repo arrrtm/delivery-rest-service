@@ -127,15 +127,10 @@ public class BranchServiceImpl implements BranchService {
     }
 
     @Override
-    public List<String> getBranchNames() {
-        List<BranchEntity> branchEntities = branchRepository.findAll()
+    public List<BranchEntity> getBranches() {
+        return branchRepository.findAll()
                 .stream().filter(branch -> !branch.isDeleted())
                 .collect(Collectors.toList());
-        List<String> names = new ArrayList<>();
-        for (BranchEntity branch : branchEntities) {
-            names.add(branch.getName());
-        }
-        return names;
     }
 
     @Override
@@ -280,8 +275,8 @@ public class BranchServiceImpl implements BranchService {
     }
 
     @Override
-    public List<Map<String, Object>> getCourierStatisticByBranch(Long user_id) {
-        BranchEntity branch = getBranchByUserId(user_id);
+    public List<Map<String, Object>> getCourierStatisticByBranch(Long userId) {
+        BranchEntity branch = getBranchByUserId(userId);
         List<Map<String, Object>> elementsCouriersStatistic = new ArrayList<>();
         List<UserEntity> userEntities = userRepository.findAllByBranch(branch);
         try {

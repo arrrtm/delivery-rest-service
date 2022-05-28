@@ -20,8 +20,6 @@ public interface BranchService {
 
     int branchPageCalculation(int page);
 
-    List<String> getBranchNames();
-
     List<Map<String, Object>> getStatistics();
 
     List<Map<String, Object>> getReport(String branchName, String period);
@@ -31,4 +29,6 @@ public interface BranchService {
     BranchEntity getBranchByUserId(Long user_id);
 
     List<Map<String, Object>> getCourierStatisticByBranch(Long user_id);
+
+    List<BranchEntity> getBranches();
 }

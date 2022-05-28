@@ -10,7 +10,6 @@ import org.springframework.lang.NonNull;
 import java.util.Optional;
 
 public interface ClientRepository extends JpaRepository<ClientEntity, Long> {
-    ClientEntity findClientEntityById(Long clientId);
 
     @NonNull
     @Override

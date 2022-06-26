@@ -88,20 +88,19 @@ public class AccountServiceImpl implements AccountService {
         String username = resetPasswordRequestDTO.getUsername();
         UserEntity userEntity = userRepository.findByUsername(username);
         ResetEntity resetEntity = resetEntityRepository.getById(1L);
-
-        Properties prop = new Properties();
-        prop.put("mail.smtp.host", "smtp.gmail.com");
-        prop.put("mail.smtp.port", "587");
-        prop.put("mail.smtp.auth", "true");
-        prop.put("mail.smtp.starttls.enable", "true");
-
-        Session session = Session.getInstance(prop, new javax.mail.Authenticator() {
-            protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(resetEntity.getGmailLogin(), resetEntity.getGmailPassword());
-            }
-        });
-
         try {
+            Properties prop = new Properties();
+            prop.put("mail.smtp.host", "smtp.gmail.com");
+            prop.put("mail.smtp.port", "587");
+            prop.put("mail.smtp.auth", "true");
+            prop.put("mail.smtp.starttls.enable", "true");
+
+            Session session = Session.getInstance(prop, new javax.mail.Authenticator() {
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(resetEntity.getGmailLogin(), resetEntity.getGmailPassword());
+                }
+            });
+
             Message message = new MimeMessage(session);
             message.setFrom(new InternetAddress(resetEntity.getGmailLogin()));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(userEntity.getEmail()));
@@ -130,7 +129,6 @@ public class AccountServiceImpl implements AccountService {
         String input = CHAR_LOWERCASE + CHAR_UPPERCASE + DIGIT;
         int size = 20;
         SecureRandom random = new SecureRandom();
-
         StringBuilder result = new StringBuilder(size);
         for (int i = 0; i < size; i++) {
             int index = random.nextInt(input.length());
